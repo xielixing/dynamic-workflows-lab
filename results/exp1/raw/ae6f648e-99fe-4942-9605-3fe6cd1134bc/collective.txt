@@ -1,0 +1,186 @@
+Both files read. I verified async-ness directly in-file (the flagged call `promoIsStale` is declared `async` in the same file). All other async calls in these files are properly awaited, and all synchronous boolean checks (`if (!rate)`, `if (!tier)`, `if (!product)`, `if (!promo)`) are on actual primitives/objects, not promises.
+
+## Audit results
+
+**C:\codeagent\dynamic-workflows-lab\fixtures\exp1-audit\src\pricing\currencyRates.ts** — No findings. All three `fetchExchangeTable()` calls are awaited (`convert`, `listSupportedCurrencies`); the `if (!rate)` / `Math.random()` guards are on a number.
+
+**C:\codeagent\dynamic-workflows-lab\fixtures\exp1-audit\src\pricing\priceCalculator.ts** — No findings. `convert()` and `db.products.all()` are awaited; `if (!product)` / `products.length === 0` are on resolved data.
+
+**C:\codeagent\dynamic-workflows-lab\fixtures\exp1-audit\src\pricing\discountEngine.ts** — No findings. `subtotalCents()` is synchronous; `if (!tier)` is on a synchronous `Array.find` result.
+
+**C:\codeagent\dynamic-workflows-lab\fixtures\exp1-audit\src\pricing\promoCodes.ts** — 1 finding:
+
+- [C:\codeagent\dynamic-workflows-lab\fixtures\exp1-audit\src\pricing\promoCodes.ts:16-17] enclosing function: `applyPromo` | expression: `const stale = promoIsStale(code)` ... `if (!stale)`
+  `promoIsStale()` is `async` (returns `Promise<boolean>`), so `stale` is a Promise object, which is always truthy. `if (!stale)` is therefore always false, so the discount is never applied and expired/unknown codes permanently pass the FIN-27 gate. The fix is `const stale = await promoIsStale(code)`.
+
+## Consolidated findings
+
+| File | Line | Enclosing function | Offending expression |
+|---|---|---|---|
+| C:\codeagent\dynamic-workflows-lab\fixtures\exp1-audit\src\pricing\promoCodes.ts | 16-17 | `applyPromo` | `const stale = promoIsStale(code)` then `if (!stale)` — missing `await` on async `promoIsStale()` |
+
+All other files are clean of the missing-await-in-boolean-context pattern.
+
+=====
+
+All four audited files are fully verified, along with the async-ness of every function imported by `index.ts`. Here is the audit result.
+
+---
+
+### Audit findings
+
+**C:\codeagent\dynamic-workflows-lab\fixtures\exp1-audit\src\index.ts**
+No findings in index.ts. Every async import is properly awaited: `await db.orders.all()` (line 15), `await quoteCart(...)` (line 18), `await reserveForOrder(...)` (line 20), `await buildDigestsFor(...)` (line 26), `await dailyOrderTotals(...)` (line 30). No Promise is ever tested for truthiness in this file.
+
+**C:\codeagent\dynamic-workflows-lab\fixtures\exp1-audit\src\shared\types.ts**
+No findings in types.ts. It contains only type/interface declarations (`User`, `Product`, `Order`, etc.) with zero functions, async or otherwise.
+
+**C:\codeagent\dynamic-workflows-lab\fixtures\exp1-audit\src\shared\logger.ts**
+No findings in logger.ts. `emit` (line 3) is synchronous and returns `void`; `makeLogger` (line 12) returns plain synchronous closures. No Promises exist in this file.
+
+**C:\codeagent\dynamic-workflows-lab\fixtures\exp1-audit\src\shared\db.ts**
+No findings in db.ts. All `Table` methods (lines 25-60) are `async`, but each is awaited at every call site; `sleep` (line 12) is always invoked via `await sleep(...)`. Line 42's ternary (`pred ? ... : ...`) tests a predicate function reference, not a call result — not a bug.
+
+---
+
+### Outside audit scope (FYI only)
+
+While verifying the functions imported by `index.ts`, I found the exact target bug pattern in **non-audited** files under `src/`. Per instructions these are excluded from the formal findings, but the caller may want to know they exist:
+
+- `src\inventory\reservationService.ts:15-16` — `const already = hasActiveReservation(orderId)` (async, returns `Promise<boolean>`) then `if (!already)` — Promise is always truthy, so the idempotence guard never fires and duplicate reservations are inserted.
+- `src\orders\fulfillmentService.ts:26-27` — `const ok = hasStock(item.sku, item.qty)` (async, returns `Promise<boolean>`) then `if (!ok)` — stock check silently passes, enabling the phantom shipments referenced in the file's comment (WMS-77).
+- `src\notifications\digestBuilder.ts:21-22` — `const sent = hasDigestBeenSent(id)` (async, returns `Promise<boolean>`) then `if (!sent)` — duplicate-digest guard never fires (CRM-204).
+
+---
+
+## Consolidated findings
+
+| File | Line | Enclosing function | Offending expression |
+|---|---|---|---|
+| — | — | — | — |
+
+**No instances of the missing-`await`-in-boolean-context bug were found in the four audited files.** (Three instances exist in non-audited files, listed above.)
+
+=====
+
+Both files reviewed. All imported helpers (`db.*`, `sleep`) are awaited at every call site in the audited files, and every async function used in a boolean test was verified by reading its declaration (local or imported). Detailed results below.
+
+## Audit results
+
+**stockService.ts** — No findings in stockService.ts.
+- `stockLevels()` (line 13) and `lowStockReport`'s guard `low.length > 0` (line 25) operate on awaited data or synchronous arrays, respectively.
+
+**reservationService.ts** — 1 finding.
+- `hasActiveReservation(orderId)` is declared `async` (line 4), so it returns `Promise<boolean>`. At line 15 its result is assigned without `await` to `already`, then line 16 tests `if (!already)`. A Promise is always truthy, so `!already` is always `false`: the idempotency guard never fires and `reserveForOrder` always falls through to the "existing reservation" branch — on a first call for an order it reads `existing[0]` (undefined) and returns `undefined` instead of inserting the reservation, silently breaking the INV-118 idempotency contract.
+
+**supplierSync.ts** — No findings in supplierSync.ts.
+- `p.stock < 15` (line 31) is a synchronous number comparison; all `db.*` / `sleep` calls are awaited; `lookupLeadTime` returns a `number`, not a Promise-bearing boolean context.
+
+## Consolidated findings
+
+| File | Line | Enclosing function | Offending expression |
+|---|---|---|---|
+| C:\codeagent\dynamic-workflows-lab\fixtures\exp1-audit\src\inventory\reservationService.ts | 15-16 | reserveForOrder | `const already = hasActiveReservation(orderId)` then `if (!already)` — missing `await`, Promise always truthy so `!already` is always false |
+
+=====
+
+The audit is complete. All three files have been analyzed, and I verified the async-ness of called functions by reading the definitions within the audited files themselves (no external imports needed verification beyond `db`/`logger`, which aren't called in boolean context).
+
+## Findings
+
+### userService.ts
+`C:\codeagent\dynamic-workflows-lab\fixtures\exp1-audit\src\users\userService.ts`
+No findings. All promises are properly returned (`getUser`, `activeCustomers`) or awaited (`deactivateUser` awaits `db.users.find` before `if (!user)`; `roleDistribution` awaits `db.users.all()`).
+
+### authService.ts
+`C:\codeagent\dynamic-workflows-lab\fixtures\exp1-audit\src\users\authService.ts`
+
+- [C:\codeagent\dynamic-workflows-lab\fixtures\exp1-audit\src\users\authService.ts:36] enclosing function: `assertCanManage` | expression: `const allowed = hasPermission(user, action)` (consumed by `if (!allowed)` on line 37)
+  Missing `await`: `hasPermission` is declared `async function ... : Promise<boolean>` (line 26), so `allowed` holds a Promise, which is always truthy; `!allowed` is always `false`, so the `ForbiddenError` guard (SEC-12, authz denial) never fires and access is always granted. Fix: `const allowed = await hasPermission(user, action)`.
+
+Other code in this file is clean: `loadPermissionMatrix`, `hasPermission`, and `recordAccess` internally use `await sleep(...)` / `await db.events.insert(...)` correctly.
+
+### profileService.ts
+`C:\codeagent\dynamic-workflows-lab\fixtures\exp1-audit\src\users\profileService.ts`
+No findings. `profileFor` awaits before `if (!user)`; `mergeAccounts` awaits `Promise.all` before the `!primary || !duplicate` check; `updateEmail` uses the synchronous regex test.
+
+## Consolidated findings
+
+| File | Line | Enclosing function | Offending expression |
+|---|---|---|---|
+| C:\codeagent\dynamic-workflows-lab\fixtures\exp1-audit\src\users\authService.ts | 36 | `assertCanManage` | `const allowed = hasPermission(user, action)` — not awaited; `if (!allowed)` on line 37 always sees truthy Promise |
+
+One bug found total; it silently disables the authorization guard in `assertCanManage`.
+
+=====
+
+I've read all three target files and verified the async-ness of every called function relevant to boolean-context usage (targets' own `hasStock` and `autoApprovalBlocked` are both declared `async` in their files). Here are the findings.
+
+## Findings
+
+### C:\codeagent\dynamic-workflows-lab\fixtures\exp1-audit\src\orders\orderService.ts
+No findings in orderService.ts. Every Promise-returning call is properly `await`ed, including the `if (!order)` guards at lines 39 (result of `await db.orders.find`).
+
+### C:\codeagent\dynamic-workflows-lab\fixtures\exp1-audit\src\orders\fulfillmentService.ts
+- [C:\codeagent\dynamic-workflows-lab\fixtures\exp1-audit\src\orders\fulfillmentService.ts:26] enclosing function: `fulfillOrder` | expression: `const ok = hasStock(item.sku, item.qty)` | `hasStock` is declared `async` (line 14, `Promise<boolean>`) but is called without `await`, so `ok` is a Promise; `if (!ok)` at line 27 is therefore always false and the OutOfStockError guard never fires against the `Promise` object, which is unconditionally truthy — exactly the phantom-shipment scenario WMS-77 describes.
+
+### C:\codeagent\dynamic-workflows-lab\fixtures\exp1-audit\src\orders\returnsService.ts
+- [C:\codeagent\dynamic-workflows-lab\fixtures\exp1-audit\src\orders\returnsService.ts:51] enclosing function: `autoApproveIfEligible` | expression: `const blocked = autoApprovalBlocked(orderId)` | `autoApprovalBlocked` is declared `async` (line 36, `Promise<boolean>`) but is called without `await`, so `blocked` is a Promise; `if (!blocked)` at line 52 is always false, so eligible refunds are never auto-approved and the finance gate (FIN-31) silently blocks all auto-approval.
+
+## Consolidated findings
+| File | Line | Enclosing function | Offending expression |
+|---|---|---|---|
+| src\orders\fulfillmentService.ts | 26 | fulfillOrder | `const ok = hasStock(item.sku, item.qty)` then `if (!ok)` (line 27) |
+| src\orders\returnsService.ts | 51 | autoApproveIfEligible | `const blocked = autoApprovalBlocked(orderId)` then `if (!blocked)` (line 52) |
+
+Both are missing-`await` bugs on locally-declared `async` functions, used in a boolean guard via `if (!...)`. orderService.ts is clean. No files were modified.
+
+=====
+
+I've read all four files. Each async call was checked against its declaration (and the `hasDigestBeenSent` import chain). Findings per file:
+
+## Audit results
+
+**`emailService.ts`** — No findings. Every async call (`stageEmail`, `drainOutbox` internally, `orderConfirmation`) is either awaited or used correctly; `orderConfirmation` awaits `stageEmail` at line 32.
+
+**`pushService.ts`** — No findings. `tokenFor` is awaited at line 23 (the call at line 22 in `pushOrderUpdate` is to `tokenFor` which is awaited, not truthy-tested).
+
+**`smsService.ts`** — No findings. `sendSms` is awaited at line 24.
+
+**`digestBuilder.ts`** — 1 finding.
+
+- [C:\codeagent\dynamic-workflows-lab\fixtures\exp1-audit\src\notifications\digestBuilder.ts:22] enclosing function: `buildDigestsFor` | expression: `if (!sent)` (with `const sent = hasDigestBeenSent(id)` at line 21)
+  Explanation: `hasDigestBeenSent` is `async` (declared line 7) and returns `Promise<boolean>`, but it is assigned to `sent` without `await`; line 22 then tests `!sent` against that Promise, which is always truthy, so `!sent` is always `false` and the dedup guard never suppresses a duplicate digest (the reported CRM-204 regression). Fix: `const sent = await hasDigestBeenSent(id)`.
+
+## Consolidated findings
+
+| File | Line | Enclosing function | Offending expression |
+|---|---|---|---|
+| C:\codeagent\dynamic-workflows-lab\fixtures\exp1-audit\src\notifications\digestBuilder.ts | 21–22 | `buildDigestsFor` | `const sent = hasDigestBeenSent(id)` / `if (!sent)` |
+
+Only one instance of the missing-await-in-boolean-context pattern exists across the four audited files; the other three files are clean.
+
+=====
+
+I've completed the audit. I read all three target files and verified the shared dependency (`C:\codeagent\dynamic-workflows-lab\fixtures\exp1-audit\src\shared\db.ts`), confirming `db.events.insert`, `db.events.all`, `db.events.where`, and `db.orders.all` are all `async` (return Promises). I also ran a targeted search across the reporting directory for all boolean-context constructs (`if`/`while`/`&&`/`||`/ternary/`??`) to ensure nothing was missed.
+
+## Findings
+
+**C:\codeagent\dynamic-workflows-lab\fixtures\exp1-audit\src\reporting\salesReporter.ts**
+No findings in salesReporter.ts. The only async calls (`db.orders.all()` line 22, `salesRows()` line 35) are properly awaited; the boolean contexts on lines 36 and 37 test synchronous values (`rows.length`, `a.revenueCents >= b.revenueCents`).
+
+**C:\codeagent\dynamic-workflows-lab\fixtures\exp1-audit\src\reporting\auditTrail.ts**
+No findings in auditTrail.ts. The only guard-relevant pattern is line 16, `void db.events.insert(event).catch(...)` — an explicit fire-and-forget (line 5-7 comment confirms it is intentional) with the promise handled via `.catch()` chaining; excluded by the audit rules. Line 22 `return db.events.where(...)` inside an `async function` is the excluded return-from-async case.
+
+**C:\codeagent\dynamic-workflows-lab\fixtures\exp1-audit\src\reporting\metricsAggregator.ts**
+No findings in metricsAggregator.ts. Every Promise-producing call is awaited: `isCacheFresh(...)` on line 25 is awaited before its result feeds `if (fresh)` on line 26, and `sleep(1)` is awaited on lines 12 and 41. The other boolean/no-coalescing contexts are pure synchronous checks (`if (!built)` on line 11, `if (day)` on line 42, `if (key)` on line 44, and the `?? []` / `?? 0` coalescences on lines 27 and 34, which all operate on sync Map values / numbers, not Promises).
+
+No MISSING-await-in-boolean-context bugs found in the audited files. All async calls are either awaited, chained (`.catch(...)`), `void`-discarded with handling, or `return`-ed from an `async` function.
+
+## Consolidated findings
+
+| File | Line | Enclosing function | Offending expression |
+|------|------|-------------------|---------------------|
+| — | — | — | — |
+
+None found. All three files are free of the flagged bug pattern.

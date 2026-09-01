@@ -1,0 +1,479 @@
+[
+  {
+    "sessionId": "ae6f648e-99fe-4942-9605-3fe6cd1134bc",
+    "jsonl": "C:\\Users\\huawei\\.claude\\projects\\C--codeagent-dynamic-workflows-lab-fixtures-exp1-audit\\ae6f648e-99fe-4942-9605-3fe6cd1134bc.jsonl",
+    "mtime": 1788264537639.7112,
+    "cwd": "C:\\codeagent\\dynamic-workflows-lab\\fixtures\\exp1-audit",
+    "main": {
+      "input": 43959,
+      "output": 9396,
+      "cacheRead": 267264,
+      "cacheCreate": 0,
+      "total": 320619,
+      "maxContextTokens": 39727
+    },
+    "subagents": [
+      {
+        "kind": "task",
+        "prompt": "You are auditing TypeScript files in a repository for a specific bug pattern: an async function's Promise result used directly in boolean context (a MISSING await). The bug occurs when a call to an async function (any call that returns a Promise) is used where a truthiness/boolean check is performed, e.g.:\n- `if (someAsync()) { ... }`\n- `if (!someAsync()) { ... }`\n- `const v = someAsync() ? a : b` (ternary condition)\n- `!someAsync() && doThing()` / `someAsync() && doThing()` / `someAsync() || fallback()`\n- Any other spot where the call result feeds a truthiness test: while/do/for conditions, `return someAsync()` from a NON-async function, boolean variable assignment, `!!x`, etc.\n\nThis silently breaks the guard because a Promise object is ALWAYS truthy regardless of its eventual result.\n\nVERIFY the called function actually returns a Promise before flagging: it may be declared `async`, or its return type may be `Promise<...>`. The called function may be defined in the audited file or imported from another file under `src/` — if in doubt, READ that other file to confirm. Do NOT flag calls to plain synchronous boolean-returning functions.\n\nEXCLUSIONS — DO NOT FLAG these (they are intentional or fine):\n- `void someAsync()` — deliberate fire-and-forget.\n- `someAsync().catch(...)` or `someAsync().then(...)` — promise handled via chaining.\n- `return someAsync()` inside an `async function` — the promise is returned for the caller to await.\n- `await someAsync()` — properly awaited.\n\nAudit EXACTLY these files (absolute paths):\n- C:\\codeagent\\dynamic-workflows-lab\\fixtures\\exp1-audit\\src\\pricing\\currencyRates.ts\n- C:\\codeagent\\dynamic-workflows-lab\\fixtures\\exp1-audit\\src\\pricing\\priceCalculator.ts\n- C:\\codeagent\\dynamic-workflows-lab\\fixtures\\exp1-audit\\src\\pricing\\discountEngine.ts\n- C:\\codeagent\\dynamic-workflows-lab\\fixtures\\exp1-audit\\src\\pricing\\promoCodes.ts\n\nOutput format per file: list each finding as `- [file path:line] enclosing function: <name> | expression: <verbat",
+        "usage": {
+          "input": 0,
+          "output": 0,
+          "cacheRead": 0,
+          "cacheCreate": 0
+        },
+        "total": 0
+      },
+      {
+        "kind": "task",
+        "prompt": "You are auditing TypeScript files in a repository for a specific bug pattern: an async function's Promise result used directly in boolean context (a MISSING await). The bug occurs when a call to an async function (any call that returns a Promise) is used where a truthiness/boolean check is performed, e.g.:\n- `if (someAsync()) { ... }`\n- `if (!someAsync()) { ... }`\n- `const v = someAsync() ? a : b` (ternary condition)\n- `!someAsync() && doThing()` / `someAsync() && doThing()` / `someAsync() || fallback()`\n- Any other spot where the call result feeds a truthiness test: while/do/for conditions, `return someAsync()` from a NON-async function, boolean variable assignment, `!!x`, etc.\n\nThis silently breaks the guard because a Promise object is ALWAYS truthy regardless of its eventual result.\n\nVERIFY the called function actually returns a Promise before flagging: it may be declared `async`, or its return type may be `Promise<...>`. The called function may be defined in the audited file or imported from another file under `src/` — if in doubt, READ that other file to confirm. Do NOT flag calls to plain synchronous boolean-returning functions.\n\nEXCLUSIONS — DO NOT FLAG these (they are intentional or fine):\n- `void someAsync()` — deliberate fire-and-forget.\n- `someAsync().catch(...)` or `someAsync().then(...)` — promise handled via chaining.\n- `return someAsync()` inside an `async function` — the promise is returned for the caller to await.\n- `await someAsync()` — properly awaited.\n\nAudit EXACTLY these files (absolute paths):\n- C:\\codeagent\\dynamic-workflows-lab\\fixtures\\exp1-audit\\src\\index.ts\n- C:\\codeagent\\dynamic-workflows-lab\\fixtures\\exp1-audit\\src\\shared\\types.ts\n- C:\\codeagent\\dynamic-workflows-lab\\fixtures\\exp1-audit\\src\\shared\\logger.ts\n- C:\\codeagent\\dynamic-workflows-lab\\fixtures\\exp1-audit\\src\\shared\\db.ts\n\nOutput format per file: list each finding as `- [file path:line] enclosing function: <name> | expression: <verbatim code>` plus 1-line explanation. If a file ",
+        "usage": {
+          "input": 0,
+          "output": 0,
+          "cacheRead": 0,
+          "cacheCreate": 0
+        },
+        "total": 0
+      },
+      {
+        "kind": "task",
+        "prompt": "You are auditing TypeScript files in a repository for a specific bug pattern: an async function's Promise result used directly in boolean context (a MISSING await). The bug occurs when a call to an async function (any call that returns a Promise) is used where a truthiness/boolean check is performed, e.g.:\n- `if (someAsync()) { ... }`\n- `if (!someAsync()) { ... }`\n- `const v = someAsync() ? a : b` (ternary condition)\n- `!someAsync() && doThing()` / `someAsync() && doThing()` / `someAsync() || fallback()`\n- Any other spot where the call result feeds a truthiness test: while/do/for conditions, `return someAsync()` from a NON-async function, boolean variable assignment, `!!x`, etc.\n\nThis silently breaks the guard because a Promise object is ALWAYS truthy regardless of its eventual result.\n\nVERIFY the called function actually returns a Promise before flagging: it may be declared `async`, or its return type may be `Promise<...>`. The called function may be defined in the audited file or imported from another file under `src/` — if in doubt, READ that other file to confirm. Do NOT flag calls to plain synchronous boolean-returning functions.\n\nEXCLUSIONS — DO NOT FLAG these (they are intentional or fine):\n- `void someAsync()` — deliberate fire-and-forget.\n- `someAsync().catch(...)` or `someAsync().then(...)` — promise handled via chaining.\n- `return someAsync()` inside an `async function` — the promise is returned for the caller to await.\n- `await someAsync()` — properly awaited.\n\nAudit EXACTLY these files (absolute paths):\n- C:\\codeagent\\dynamic-workflows-lab\\fixtures\\exp1-audit\\src\\inventory\\stockService.ts\n- C:\\codeagent\\dynamic-workflows-lab\\fixtures\\exp1-audit\\src\\inventory\\reservationService.ts\n- C:\\codeagent\\dynamic-workflows-lab\\fixtures\\exp1-audit\\src\\inventory\\supplierSync.ts\n\nOutput format per file: list each finding as `- [file path:line] enclosing function: <name> | expression: <verbatim code>` plus 1-line explanation. If a file has zero findings, state `No fin",
+        "usage": {
+          "input": 0,
+          "output": 0,
+          "cacheRead": 0,
+          "cacheCreate": 0
+        },
+        "total": 0
+      },
+      {
+        "kind": "task",
+        "prompt": "You are auditing TypeScript files in a repository for a specific bug pattern: an async function's Promise result used directly in boolean context (a MISSING await). The bug occurs when a call to an async function (any call that returns a Promise) is used where a truthiness/boolean check is performed, e.g.:\n- `if (someAsync()) { ... }`\n- `if (!someAsync()) { ... }`\n- `const v = someAsync() ? a : b` (ternary condition)\n- `!someAsync() && doThing()` / `someAsync() && doThing()` / `someAsync() || fallback()`\n- Any other spot where the call result feeds a truthiness test: while/do/for conditions, `return someAsync()` from a NON-async function, boolean variable assignment, `!!x`, etc.\n\nThis silently breaks the guard because a Promise object is ALWAYS truthy regardless of its eventual result.\n\nVERIFY the called function actually returns a Promise before flagging: it may be declared `async`, or its return type may be `Promise<...>`. The called function may be defined in the audited file or imported from another file under `src/` — if in doubt, READ that other file to confirm. Do NOT flag calls to plain synchronous boolean-returning functions.\n\nEXCLUSIONS — DO NOT FLAG these (they are intentional or fine):\n- `void someAsync()` — deliberate fire-and-forget.\n- `someAsync().catch(...)` or `someAsync().then(...)` — promise handled via chaining.\n- `return someAsync()` inside an `async function` — the promise is returned for the caller to await.\n- `await someAsync()` — properly awaited.\n\nAudit EXACTLY these files (absolute paths):\n- C:\\codeagent\\dynamic-workflows-lab\\fixtures\\exp1-audit\\src\\users\\userService.ts\n- C:\\codeagent\\dynamic-workflows-lab\\fixtures\\exp1-audit\\src\\users\\authService.ts\n- C:\\codeagent\\dynamic-workflows-lab\\fixtures\\exp1-audit\\src\\users\\profileService.ts\n\nOutput format per file: list each finding as `- [file path:line] enclosing function: <name> | expression: <verbatim code>` plus 1-line explanation. If a file has zero findings, state `No findings in <filename",
+        "usage": {
+          "input": 0,
+          "output": 0,
+          "cacheRead": 0,
+          "cacheCreate": 0
+        },
+        "total": 0
+      },
+      {
+        "kind": "task",
+        "prompt": "You are auditing TypeScript files in a repository for a specific bug pattern: an async function's Promise result used directly in boolean context (a MISSING await). The bug occurs when a call to an async function (any call that returns a Promise) is used where a truthiness/boolean check is performed, e.g.:\n- `if (someAsync()) { ... }`\n- `if (!someAsync()) { ... }`\n- `const v = someAsync() ? a : b` (ternary condition)\n- `!someAsync() && doThing()` / `someAsync() && doThing()` / `someAsync() || fallback()`\n- Any other spot where the call result feeds a truthiness test: while/do/for conditions, `return someAsync()` from a NON-async function, boolean variable assignment, `!!x`, etc.\n\nThis silently breaks the guard because a Promise object is ALWAYS truthy regardless of its eventual result.\n\nVERIFY the called function actually returns a Promise before flagging: it may be declared `async`, or its return type may be `Promise<...>`. The called function may be defined in the audited file or imported from another file under `src/` — if in doubt, READ that other file to confirm. Do NOT flag calls to plain synchronous boolean-returning functions.\n\nEXCLUSIONS — DO NOT FLAG these (they are intentional or fine):\n- `void someAsync()` — deliberate fire-and-forget.\n- `someAsync().catch(...)` or `someAsync().then(...)` — promise handled via chaining.\n- `return someAsync()` inside an `async function` — the promise is returned for the caller to await.\n- `await someAsync()` — properly awaited.\n\nAudit EXACTLY these files (absolute paths):\n- C:\\codeagent\\dynamic-workflows-lab\\fixtures\\exp1-audit\\src\\orders\\orderService.ts\n- C:\\codeagent\\dynamic-workflows-lab\\fixtures\\exp1-audit\\src\\orders\\fulfillmentService.ts\n- C:\\codeagent\\dynamic-workflows-lab\\fixtures\\exp1-audit\\src\\orders\\returnsService.ts\n\nOutput format per file: list each finding as `- [file path:line] enclosing function: <name> | expression: <verbatim code>` plus 1-line explanation. If a file has zero findings, state `No findings i",
+        "usage": {
+          "input": 0,
+          "output": 0,
+          "cacheRead": 0,
+          "cacheCreate": 0
+        },
+        "total": 0
+      },
+      {
+        "kind": "task",
+        "prompt": "You are auditing TypeScript files in a repository for a specific bug pattern: an async function's Promise result used directly in boolean context (a MISSING await). The bug occurs when a call to an async function (any call that returns a Promise) is used where a truthiness/boolean check is performed, e.g.:\n- `if (someAsync()) { ... }`\n- `if (!someAsync()) { ... }`\n- `const v = someAsync() ? a : b` (ternary condition)\n- `!someAsync() && doThing()` / `someAsync() && doThing()` / `someAsync() || fallback()`\n- Any other spot where the call result feeds a truthiness test: while/do/for conditions, `return someAsync()` from a NON-async function, boolean variable assignment, `!!x`, etc.\n\nThis silently breaks the guard because a Promise object is ALWAYS truthy regardless of its eventual result.\n\nVERIFY the called function actually returns a Promise before flagging: it may be declared `async`, or its return type may be `Promise<...>`. The called function may be defined in the audited file or imported from another file under `src/` — if in doubt, READ that other file to confirm. Do NOT flag calls to plain synchronous boolean-returning functions.\n\nEXCLUSIONS — DO NOT FLAG these (they are intentional or fine):\n- `void someAsync()` — deliberate fire-and-forget.\n- `someAsync().catch(...)` or `someAsync().then(...)` — promise handled via chaining.\n- `return someAsync()` inside an `async function` — the promise is returned for the caller to await.\n- `await someAsync()` — properly awaited.\n\nAudit EXACTLY these files (absolute paths):\n- C:\\codeagent\\dynamic-workflows-lab\\fixtures\\exp1-audit\\src\\notifications\\emailService.ts\n- C:\\codeagent\\dynamic-workflows-lab\\fixtures\\exp1-audit\\src\\notifications\\pushService.ts\n- C:\\codeagent\\dynamic-workflows-lab\\fixtures\\exp1-audit\\src\\notifications\\smsService.ts\n- C:\\codeagent\\dynamic-workflows-lab\\fixtures\\exp1-audit\\src\\notifications\\digestBuilder.ts\n\nOutput format per file: list each finding as `- [file path:line] enclosing function: <name> | e",
+        "usage": {
+          "input": 0,
+          "output": 0,
+          "cacheRead": 0,
+          "cacheCreate": 0
+        },
+        "total": 0
+      },
+      {
+        "kind": "task",
+        "prompt": "You are auditing TypeScript files in a repository for a specific bug pattern: an async function's Promise result used directly in boolean context (a MISSING await). The bug occurs when a call to an async function (any call that returns a Promise) is used where a truthiness/boolean check is performed, e.g.:\n- `if (someAsync()) { ... }`\n- `if (!someAsync()) { ... }`\n- `const v = someAsync() ? a : b` (ternary condition)\n- `!someAsync() && doThing()` / `someAsync() && doThing()` / `someAsync() || fallback()`\n- Any other spot where the call result feeds a truthiness test: while/do/for conditions, `return someAsync()` from a NON-async function, boolean variable assignment, `!!x`, etc.\n\nThis silently breaks the guard because a Promise object is ALWAYS truthy regardless of its eventual result.\n\nVERIFY the called function actually returns a Promise before flagging: it may be declared `async`, or its return type may be `Promise<...>`. The called function may be defined in the audited file or imported from another file under `src/` — if in doubt, READ that other file to confirm. Do NOT flag calls to plain synchronous boolean-returning functions.\n\nEXCLUSIONS — DO NOT FLAG these (they are intentional or fine):\n- `void someAsync()` — deliberate fire-and-forget.\n- `someAsync().catch(...)` or `someAsync().then(...)` — promise handled via chaining.\n- `return someAsync()` inside an `async function` — the promise is returned for the caller to await.\n- `await someAsync()` — properly awaited.\n\nAudit EXACTLY these files (absolute paths):\n- C:\\codeagent\\dynamic-workflows-lab\\fixtures\\exp1-audit\\src\\reporting\\salesReporter.ts\n- C:\\codeagent\\dynamic-workflows-lab\\fixtures\\exp1-audit\\src\\reporting\\auditTrail.ts\n- C:\\codeagent\\dynamic-workflows-lab\\fixtures\\exp1-audit\\src\\reporting\\metricsAggregator.ts\n\nOutput format per file: list each finding as `- [file path:line] enclosing function: <name> | expression: <verbatim code>` plus 1-line explanation. If a file has zero findings, state `No findi",
+        "usage": {
+          "input": 0,
+          "output": 0,
+          "cacheRead": 0,
+          "cacheCreate": 0
+        },
+        "total": 0
+      }
+    ],
+    "subagentsTotal": 0,
+    "taskSpawns": [
+      {
+        "description": "Audit shared + root TS files",
+        "prompt": "You are auditing TypeScript files in a repository for a specific bug pattern: an async function's Promise result used directly in boolean context (a MISSING await). The bug occurs when a call to an async function (any call that returns a Promise) is used where a truthiness/boolean check is performed, e.g.:\n- `if (someAsync()) { ... }`\n- `if (!someAsync()) { ... }`\n- `const v = someAsync() ? a : b` (ternary condition)\n- `!someAsync() && doThing()` / `someAsync() && doThing()` / `someAsync() || fallback()`\n- Any other spot where the call result feeds a truthiness test: while/do/for conditions, `return someAsync()` from a NON-async function, boolean variable assignment, `!!x`, etc.\n\nThis silently breaks the guard because a Promise object is ALWAYS truthy regardless of its eventual result.\n\nVERIFY the called function actually returns a Promise before flagging: it may be declared `async`, or its return type may be `Promise<...>`. The called function may be defined in the audited file or imported from another file under `src/` — if in doubt, READ that other file to confirm. Do NOT flag calls to plain synchronous boolean-returning functions.\n\nEXCLUSIONS — DO NOT FLAG these (they are intentional or fine):\n- `void someAsync()` — deliberate fire-and-forget.\n- `someAsync().catch(...)` or `someAsync().then(...)` — promise handled via chaining.\n- `return someAsync()` inside an `async function` — the promise is returned for the caller to await.\n- `await someAsync()` — properly awaited.\n\nAudit EXACTLY these files (absolute paths):\n- C:\\codeagent\\dynamic-workflows-lab\\fixtures\\exp1-audit\\src\\index.ts\n- C:\\codeagent\\dynamic-workflows-lab\\fixtures\\exp1-audit\\src\\shared\\types.ts\n- C:\\codeagent\\dynamic-workflows-lab\\fixtures\\exp1-audit\\src\\shared\\logger.ts\n- C:\\codeagent\\dynamic-workflows-lab\\fixtures\\exp1-audit\\src\\shared\\db.ts\n\nOutput format per file: list each finding as `- [file path:line] enclosing function: <name> | expression: <verbatim code>` plus 1-line explanation. If a file "
+      },
+      {
+        "description": "Audit pricing TS files",
+        "prompt": "You are auditing TypeScript files in a repository for a specific bug pattern: an async function's Promise result used directly in boolean context (a MISSING await). The bug occurs when a call to an async function (any call that returns a Promise) is used where a truthiness/boolean check is performed, e.g.:\n- `if (someAsync()) { ... }`\n- `if (!someAsync()) { ... }`\n- `const v = someAsync() ? a : b` (ternary condition)\n- `!someAsync() && doThing()` / `someAsync() && doThing()` / `someAsync() || fallback()`\n- Any other spot where the call result feeds a truthiness test: while/do/for conditions, `return someAsync()` from a NON-async function, boolean variable assignment, `!!x`, etc.\n\nThis silently breaks the guard because a Promise object is ALWAYS truthy regardless of its eventual result.\n\nVERIFY the called function actually returns a Promise before flagging: it may be declared `async`, or its return type may be `Promise<...>`. The called function may be defined in the audited file or imported from another file under `src/` — if in doubt, READ that other file to confirm. Do NOT flag calls to plain synchronous boolean-returning functions.\n\nEXCLUSIONS — DO NOT FLAG these (they are intentional or fine):\n- `void someAsync()` — deliberate fire-and-forget.\n- `someAsync().catch(...)` or `someAsync().then(...)` — promise handled via chaining.\n- `return someAsync()` inside an `async function` — the promise is returned for the caller to await.\n- `await someAsync()` — properly awaited.\n\nAudit EXACTLY these files (absolute paths):\n- C:\\codeagent\\dynamic-workflows-lab\\fixtures\\exp1-audit\\src\\pricing\\currencyRates.ts\n- C:\\codeagent\\dynamic-workflows-lab\\fixtures\\exp1-audit\\src\\pricing\\priceCalculator.ts\n- C:\\codeagent\\dynamic-workflows-lab\\fixtures\\exp1-audit\\src\\pricing\\discountEngine.ts\n- C:\\codeagent\\dynamic-workflows-lab\\fixtures\\exp1-audit\\src\\pricing\\promoCodes.ts\n\nOutput format per file: list each finding as `- [file path:line] enclosing function: <name> | expression: <verbat"
+      },
+      {
+        "description": "Audit inventory TS files",
+        "prompt": "You are auditing TypeScript files in a repository for a specific bug pattern: an async function's Promise result used directly in boolean context (a MISSING await). The bug occurs when a call to an async function (any call that returns a Promise) is used where a truthiness/boolean check is performed, e.g.:\n- `if (someAsync()) { ... }`\n- `if (!someAsync()) { ... }`\n- `const v = someAsync() ? a : b` (ternary condition)\n- `!someAsync() && doThing()` / `someAsync() && doThing()` / `someAsync() || fallback()`\n- Any other spot where the call result feeds a truthiness test: while/do/for conditions, `return someAsync()` from a NON-async function, boolean variable assignment, `!!x`, etc.\n\nThis silently breaks the guard because a Promise object is ALWAYS truthy regardless of its eventual result.\n\nVERIFY the called function actually returns a Promise before flagging: it may be declared `async`, or its return type may be `Promise<...>`. The called function may be defined in the audited file or imported from another file under `src/` — if in doubt, READ that other file to confirm. Do NOT flag calls to plain synchronous boolean-returning functions.\n\nEXCLUSIONS — DO NOT FLAG these (they are intentional or fine):\n- `void someAsync()` — deliberate fire-and-forget.\n- `someAsync().catch(...)` or `someAsync().then(...)` — promise handled via chaining.\n- `return someAsync()` inside an `async function` — the promise is returned for the caller to await.\n- `await someAsync()` — properly awaited.\n\nAudit EXACTLY these files (absolute paths):\n- C:\\codeagent\\dynamic-workflows-lab\\fixtures\\exp1-audit\\src\\inventory\\stockService.ts\n- C:\\codeagent\\dynamic-workflows-lab\\fixtures\\exp1-audit\\src\\inventory\\reservationService.ts\n- C:\\codeagent\\dynamic-workflows-lab\\fixtures\\exp1-audit\\src\\inventory\\supplierSync.ts\n\nOutput format per file: list each finding as `- [file path:line] enclosing function: <name> | expression: <verbatim code>` plus 1-line explanation. If a file has zero findings, state `No fin"
+      },
+      {
+        "description": "Audit orders TS files",
+        "prompt": "You are auditing TypeScript files in a repository for a specific bug pattern: an async function's Promise result used directly in boolean context (a MISSING await). The bug occurs when a call to an async function (any call that returns a Promise) is used where a truthiness/boolean check is performed, e.g.:\n- `if (someAsync()) { ... }`\n- `if (!someAsync()) { ... }`\n- `const v = someAsync() ? a : b` (ternary condition)\n- `!someAsync() && doThing()` / `someAsync() && doThing()` / `someAsync() || fallback()`\n- Any other spot where the call result feeds a truthiness test: while/do/for conditions, `return someAsync()` from a NON-async function, boolean variable assignment, `!!x`, etc.\n\nThis silently breaks the guard because a Promise object is ALWAYS truthy regardless of its eventual result.\n\nVERIFY the called function actually returns a Promise before flagging: it may be declared `async`, or its return type may be `Promise<...>`. The called function may be defined in the audited file or imported from another file under `src/` — if in doubt, READ that other file to confirm. Do NOT flag calls to plain synchronous boolean-returning functions.\n\nEXCLUSIONS — DO NOT FLAG these (they are intentional or fine):\n- `void someAsync()` — deliberate fire-and-forget.\n- `someAsync().catch(...)` or `someAsync().then(...)` — promise handled via chaining.\n- `return someAsync()` inside an `async function` — the promise is returned for the caller to await.\n- `await someAsync()` — properly awaited.\n\nAudit EXACTLY these files (absolute paths):\n- C:\\codeagent\\dynamic-workflows-lab\\fixtures\\exp1-audit\\src\\orders\\orderService.ts\n- C:\\codeagent\\dynamic-workflows-lab\\fixtures\\exp1-audit\\src\\orders\\fulfillmentService.ts\n- C:\\codeagent\\dynamic-workflows-lab\\fixtures\\exp1-audit\\src\\orders\\returnsService.ts\n\nOutput format per file: list each finding as `- [file path:line] enclosing function: <name> | expression: <verbatim code>` plus 1-line explanation. If a file has zero findings, state `No findings i"
+      },
+      {
+        "description": "Audit users TS files",
+        "prompt": "You are auditing TypeScript files in a repository for a specific bug pattern: an async function's Promise result used directly in boolean context (a MISSING await). The bug occurs when a call to an async function (any call that returns a Promise) is used where a truthiness/boolean check is performed, e.g.:\n- `if (someAsync()) { ... }`\n- `if (!someAsync()) { ... }`\n- `const v = someAsync() ? a : b` (ternary condition)\n- `!someAsync() && doThing()` / `someAsync() && doThing()` / `someAsync() || fallback()`\n- Any other spot where the call result feeds a truthiness test: while/do/for conditions, `return someAsync()` from a NON-async function, boolean variable assignment, `!!x`, etc.\n\nThis silently breaks the guard because a Promise object is ALWAYS truthy regardless of its eventual result.\n\nVERIFY the called function actually returns a Promise before flagging: it may be declared `async`, or its return type may be `Promise<...>`. The called function may be defined in the audited file or imported from another file under `src/` — if in doubt, READ that other file to confirm. Do NOT flag calls to plain synchronous boolean-returning functions.\n\nEXCLUSIONS — DO NOT FLAG these (they are intentional or fine):\n- `void someAsync()` — deliberate fire-and-forget.\n- `someAsync().catch(...)` or `someAsync().then(...)` — promise handled via chaining.\n- `return someAsync()` inside an `async function` — the promise is returned for the caller to await.\n- `await someAsync()` — properly awaited.\n\nAudit EXACTLY these files (absolute paths):\n- C:\\codeagent\\dynamic-workflows-lab\\fixtures\\exp1-audit\\src\\users\\userService.ts\n- C:\\codeagent\\dynamic-workflows-lab\\fixtures\\exp1-audit\\src\\users\\authService.ts\n- C:\\codeagent\\dynamic-workflows-lab\\fixtures\\exp1-audit\\src\\users\\profileService.ts\n\nOutput format per file: list each finding as `- [file path:line] enclosing function: <name> | expression: <verbatim code>` plus 1-line explanation. If a file has zero findings, state `No findings in <filename"
+      },
+      {
+        "description": "Audit notifications TS files",
+        "prompt": "You are auditing TypeScript files in a repository for a specific bug pattern: an async function's Promise result used directly in boolean context (a MISSING await). The bug occurs when a call to an async function (any call that returns a Promise) is used where a truthiness/boolean check is performed, e.g.:\n- `if (someAsync()) { ... }`\n- `if (!someAsync()) { ... }`\n- `const v = someAsync() ? a : b` (ternary condition)\n- `!someAsync() && doThing()` / `someAsync() && doThing()` / `someAsync() || fallback()`\n- Any other spot where the call result feeds a truthiness test: while/do/for conditions, `return someAsync()` from a NON-async function, boolean variable assignment, `!!x`, etc.\n\nThis silently breaks the guard because a Promise object is ALWAYS truthy regardless of its eventual result.\n\nVERIFY the called function actually returns a Promise before flagging: it may be declared `async`, or its return type may be `Promise<...>`. The called function may be defined in the audited file or imported from another file under `src/` — if in doubt, READ that other file to confirm. Do NOT flag calls to plain synchronous boolean-returning functions.\n\nEXCLUSIONS — DO NOT FLAG these (they are intentional or fine):\n- `void someAsync()` — deliberate fire-and-forget.\n- `someAsync().catch(...)` or `someAsync().then(...)` — promise handled via chaining.\n- `return someAsync()` inside an `async function` — the promise is returned for the caller to await.\n- `await someAsync()` — properly awaited.\n\nAudit EXACTLY these files (absolute paths):\n- C:\\codeagent\\dynamic-workflows-lab\\fixtures\\exp1-audit\\src\\notifications\\emailService.ts\n- C:\\codeagent\\dynamic-workflows-lab\\fixtures\\exp1-audit\\src\\notifications\\pushService.ts\n- C:\\codeagent\\dynamic-workflows-lab\\fixtures\\exp1-audit\\src\\notifications\\smsService.ts\n- C:\\codeagent\\dynamic-workflows-lab\\fixtures\\exp1-audit\\src\\notifications\\digestBuilder.ts\n\nOutput format per file: list each finding as `- [file path:line] enclosing function: <name> | e"
+      },
+      {
+        "description": "Audit reporting TS files",
+        "prompt": "You are auditing TypeScript files in a repository for a specific bug pattern: an async function's Promise result used directly in boolean context (a MISSING await). The bug occurs when a call to an async function (any call that returns a Promise) is used where a truthiness/boolean check is performed, e.g.:\n- `if (someAsync()) { ... }`\n- `if (!someAsync()) { ... }`\n- `const v = someAsync() ? a : b` (ternary condition)\n- `!someAsync() && doThing()` / `someAsync() && doThing()` / `someAsync() || fallback()`\n- Any other spot where the call result feeds a truthiness test: while/do/for conditions, `return someAsync()` from a NON-async function, boolean variable assignment, `!!x`, etc.\n\nThis silently breaks the guard because a Promise object is ALWAYS truthy regardless of its eventual result.\n\nVERIFY the called function actually returns a Promise before flagging: it may be declared `async`, or its return type may be `Promise<...>`. The called function may be defined in the audited file or imported from another file under `src/` — if in doubt, READ that other file to confirm. Do NOT flag calls to plain synchronous boolean-returning functions.\n\nEXCLUSIONS — DO NOT FLAG these (they are intentional or fine):\n- `void someAsync()` — deliberate fire-and-forget.\n- `someAsync().catch(...)` or `someAsync().then(...)` — promise handled via chaining.\n- `return someAsync()` inside an `async function` — the promise is returned for the caller to await.\n- `await someAsync()` — properly awaited.\n\nAudit EXACTLY these files (absolute paths):\n- C:\\codeagent\\dynamic-workflows-lab\\fixtures\\exp1-audit\\src\\reporting\\salesReporter.ts\n- C:\\codeagent\\dynamic-workflows-lab\\fixtures\\exp1-audit\\src\\reporting\\auditTrail.ts\n- C:\\codeagent\\dynamic-workflows-lab\\fixtures\\exp1-audit\\src\\reporting\\metricsAggregator.ts\n\nOutput format per file: list each finding as `- [file path:line] enclosing function: <name> | expression: <verbatim code>` plus 1-line explanation. If a file has zero findings, state `No findi"
+      }
+    ],
+    "filesAudited": [
+      "src/pricing/currencyRates.ts",
+      "src/pricing/priceCalculator.ts",
+      "src/pricing/discountEngine.ts",
+      "src/pricing/promoCodes.ts",
+      "src/index.ts",
+      "src/shared/types.ts",
+      "src/shared/logger.ts",
+      "src/shared/db.ts",
+      "src/inventory/stockService.ts",
+      "src/inventory/reservationService.ts",
+      "src/inventory/supplierSync.ts",
+      "src/users/userService.ts",
+      "src/users/authService.ts",
+      "src/users/profileService.ts",
+      "src/orders/orderService.ts",
+      "src/orders/fulfillmentService.ts",
+      "src/orders/returnsService.ts",
+      "src/notifications/emailService.ts",
+      "src/notifications/pushService.ts",
+      "src/notifications/smsService.ts",
+      "src/notifications/digestBuilder.ts",
+      "src/reporting/salesReporter.ts",
+      "src/reporting/auditTrail.ts",
+      "src/reporting/metricsAggregator.ts"
+    ],
+    "grandTotal": 320619,
+    "report": "Shared/root agent done — 0 findings in those 4 files (its cross-file verification independently confirmed the inventory/orders/notifications bugs). Six agents down, one to go (pricing).",
+    "workflowScripts": []
+  },
+  {
+    "sessionId": "5a325554-db06-4219-800d-b530751ad68e",
+    "jsonl": "C:\\Users\\huawei\\.claude\\projects\\C--codeagent-dynamic-workflows-lab-fixtures-exp1-audit\\5a325554-db06-4219-800d-b530751ad68e.jsonl",
+    "mtime": 1788264696122.4546,
+    "cwd": "C:\\codeagent\\dynamic-workflows-lab\\fixtures\\exp1-audit",
+    "main": {
+      "input": 39488,
+      "output": 9200,
+      "cacheRead": 178176,
+      "cacheCreate": 0,
+      "total": 226864,
+      "maxContextTokens": 36284
+    },
+    "subagents": [
+      {
+        "kind": "workflow",
+        "prompt": "You are auditing EXACTLY ONE TypeScript file for a specific bug pattern. Read the file at \"src/notifications/pushService.ts\" in full before concluding.\n\nTARGET BUG PATTERN: missing `await` — a call to an async function (or any function returning a Promise/PromiseLike) whose result is used DIRECTLY in a boolean context:\n- `if (someAsync()) { ... }`\n- `!someAsync()`\n- `someAsync() && x`  or  `x || someAsync()`\n- `someAsync() ? a : b`\n- `while (someAsync())`, `do { ... } while (someAsync())`\n- `Boolean(someAsync())`, or any other guard where the Promise object itself is the tested value.\n\nBecause a Promise object is always truthy, these guards are silently broken:\n- `if (promise)` always takes the true-branch\n- `!promise` is always false (the guard never fires)\n- `promise && x` always evaluates `x`\n- `promise ? a : b` always picks `a`\n\nDO NOT REPORT — these are fine, ignore entirely:\n1. Awaited calls: `if (await someAsync())`, `!(await someAsync())`, `const r = await someAsync(); if (r)`, etc.\n2. Fire-and-forget / voided: `void someAsync();` or a bare `someAsync();` statement with no boolean use of its result.\n3. Returned promises: `return someAsync();` from an async function (the caller handles it).\n4. Chains with handlers: `someAsync().then(...)`, `someAsync().catch(...)`, `someAsync().finally(...)` — the promise is consumed via handlers, which is acceptable handling. (Only if the RESULT of such a chain is ITSELF fed into a boolean test without await, report that specific use.)\n5. Non-Promise calls: ONLY flag calls that actually return a Promise — the callee is declared `async`, returns `Promise<...>`/`PromiseLike<...>`, or returns `new Promise(...)`. Do not flag synchronous functions, plain object/boolean/string getters, or type-only references.\n6. Services/high-order wrappers where the promise is intentionally awaited one line earlier and the variable is tested — the bug is specifically calling the async function WITHOUT await inside the boolean test.\n\nREPORT FIELD",
+        "usage": {
+          "input": 0,
+          "output": 0,
+          "cacheRead": 0,
+          "cacheCreate": 0
+        },
+        "total": 0
+      },
+      {
+        "kind": "workflow",
+        "prompt": "You are auditing EXACTLY ONE TypeScript file for a specific bug pattern. Read the file at \"src/index.ts\" in full before concluding.\n\nTARGET BUG PATTERN: missing `await` — a call to an async function (or any function returning a Promise/PromiseLike) whose result is used DIRECTLY in a boolean context:\n- `if (someAsync()) { ... }`\n- `!someAsync()`\n- `someAsync() && x`  or  `x || someAsync()`\n- `someAsync() ? a : b`\n- `while (someAsync())`, `do { ... } while (someAsync())`\n- `Boolean(someAsync())`, or any other guard where the Promise object itself is the tested value.\n\nBecause a Promise object is always truthy, these guards are silently broken:\n- `if (promise)` always takes the true-branch\n- `!promise` is always false (the guard never fires)\n- `promise && x` always evaluates `x`\n- `promise ? a : b` always picks `a`\n\nDO NOT REPORT — these are fine, ignore entirely:\n1. Awaited calls: `if (await someAsync())`, `!(await someAsync())`, `const r = await someAsync(); if (r)`, etc.\n2. Fire-and-forget / voided: `void someAsync();` or a bare `someAsync();` statement with no boolean use of its result.\n3. Returned promises: `return someAsync();` from an async function (the caller handles it).\n4. Chains with handlers: `someAsync().then(...)`, `someAsync().catch(...)`, `someAsync().finally(...)` — the promise is consumed via handlers, which is acceptable handling. (Only if the RESULT of such a chain is ITSELF fed into a boolean test without await, report that specific use.)\n5. Non-Promise calls: ONLY flag calls that actually return a Promise — the callee is declared `async`, returns `Promise<...>`/`PromiseLike<...>`, or returns `new Promise(...)`. Do not flag synchronous functions, plain object/boolean/string getters, or type-only references.\n6. Services/high-order wrappers where the promise is intentionally awaited one line earlier and the variable is tested — the bug is specifically calling the async function WITHOUT await inside the boolean test.\n\nREPORT FIELDS:\n- file: \"src/inde",
+        "usage": {
+          "input": 0,
+          "output": 0,
+          "cacheRead": 0,
+          "cacheCreate": 0
+        },
+        "total": 0
+      },
+      {
+        "kind": "workflow",
+        "prompt": "You are auditing EXACTLY ONE TypeScript file for a specific bug pattern. Read the file at \"src/orders/orderService.ts\" in full before concluding.\n\nTARGET BUG PATTERN: missing `await` — a call to an async function (or any function returning a Promise/PromiseLike) whose result is used DIRECTLY in a boolean context:\n- `if (someAsync()) { ... }`\n- `!someAsync()`\n- `someAsync() && x`  or  `x || someAsync()`\n- `someAsync() ? a : b`\n- `while (someAsync())`, `do { ... } while (someAsync())`\n- `Boolean(someAsync())`, or any other guard where the Promise object itself is the tested value.\n\nBecause a Promise object is always truthy, these guards are silently broken:\n- `if (promise)` always takes the true-branch\n- `!promise` is always false (the guard never fires)\n- `promise && x` always evaluates `x`\n- `promise ? a : b` always picks `a`\n\nDO NOT REPORT — these are fine, ignore entirely:\n1. Awaited calls: `if (await someAsync())`, `!(await someAsync())`, `const r = await someAsync(); if (r)`, etc.\n2. Fire-and-forget / voided: `void someAsync();` or a bare `someAsync();` statement with no boolean use of its result.\n3. Returned promises: `return someAsync();` from an async function (the caller handles it).\n4. Chains with handlers: `someAsync().then(...)`, `someAsync().catch(...)`, `someAsync().finally(...)` — the promise is consumed via handlers, which is acceptable handling. (Only if the RESULT of such a chain is ITSELF fed into a boolean test without await, report that specific use.)\n5. Non-Promise calls: ONLY flag calls that actually return a Promise — the callee is declared `async`, returns `Promise<...>`/`PromiseLike<...>`, or returns `new Promise(...)`. Do not flag synchronous functions, plain object/boolean/string getters, or type-only references.\n6. Services/high-order wrappers where the promise is intentionally awaited one line earlier and the variable is tested — the bug is specifically calling the async function WITHOUT await inside the boolean test.\n\nREPORT FIELDS:\n- f",
+        "usage": {
+          "input": 0,
+          "output": 0,
+          "cacheRead": 0,
+          "cacheCreate": 0
+        },
+        "total": 0
+      },
+      {
+        "kind": "workflow",
+        "prompt": "You are auditing EXACTLY ONE TypeScript file for a specific bug pattern. Read the file at \"src/inventory/supplierSync.ts\" in full before concluding.\n\nTARGET BUG PATTERN: missing `await` — a call to an async function (or any function returning a Promise/PromiseLike) whose result is used DIRECTLY in a boolean context:\n- `if (someAsync()) { ... }`\n- `!someAsync()`\n- `someAsync() && x`  or  `x || someAsync()`\n- `someAsync() ? a : b`\n- `while (someAsync())`, `do { ... } while (someAsync())`\n- `Boolean(someAsync())`, or any other guard where the Promise object itself is the tested value.\n\nBecause a Promise object is always truthy, these guards are silently broken:\n- `if (promise)` always takes the true-branch\n- `!promise` is always false (the guard never fires)\n- `promise && x` always evaluates `x`\n- `promise ? a : b` always picks `a`\n\nDO NOT REPORT — these are fine, ignore entirely:\n1. Awaited calls: `if (await someAsync())`, `!(await someAsync())`, `const r = await someAsync(); if (r)`, etc.\n2. Fire-and-forget / voided: `void someAsync();` or a bare `someAsync();` statement with no boolean use of its result.\n3. Returned promises: `return someAsync();` from an async function (the caller handles it).\n4. Chains with handlers: `someAsync().then(...)`, `someAsync().catch(...)`, `someAsync().finally(...)` — the promise is consumed via handlers, which is acceptable handling. (Only if the RESULT of such a chain is ITSELF fed into a boolean test without await, report that specific use.)\n5. Non-Promise calls: ONLY flag calls that actually return a Promise — the callee is declared `async`, returns `Promise<...>`/`PromiseLike<...>`, or returns `new Promise(...)`. Do not flag synchronous functions, plain object/boolean/string getters, or type-only references.\n6. Services/high-order wrappers where the promise is intentionally awaited one line earlier and the variable is tested — the bug is specifically calling the async function WITHOUT await inside the boolean test.\n\nREPORT FIELDS:\n",
+        "usage": {
+          "input": 0,
+          "output": 0,
+          "cacheRead": 0,
+          "cacheCreate": 0
+        },
+        "total": 0
+      },
+      {
+        "kind": "workflow",
+        "prompt": "You are auditing EXACTLY ONE TypeScript file for a specific bug pattern. Read the file at \"src/pricing/promoCodes.ts\" in full before concluding.\n\nTARGET BUG PATTERN: missing `await` — a call to an async function (or any function returning a Promise/PromiseLike) whose result is used DIRECTLY in a boolean context:\n- `if (someAsync()) { ... }`\n- `!someAsync()`\n- `someAsync() && x`  or  `x || someAsync()`\n- `someAsync() ? a : b`\n- `while (someAsync())`, `do { ... } while (someAsync())`\n- `Boolean(someAsync())`, or any other guard where the Promise object itself is the tested value.\n\nBecause a Promise object is always truthy, these guards are silently broken:\n- `if (promise)` always takes the true-branch\n- `!promise` is always false (the guard never fires)\n- `promise && x` always evaluates `x`\n- `promise ? a : b` always picks `a`\n\nDO NOT REPORT — these are fine, ignore entirely:\n1. Awaited calls: `if (await someAsync())`, `!(await someAsync())`, `const r = await someAsync(); if (r)`, etc.\n2. Fire-and-forget / voided: `void someAsync();` or a bare `someAsync();` statement with no boolean use of its result.\n3. Returned promises: `return someAsync();` from an async function (the caller handles it).\n4. Chains with handlers: `someAsync().then(...)`, `someAsync().catch(...)`, `someAsync().finally(...)` — the promise is consumed via handlers, which is acceptable handling. (Only if the RESULT of such a chain is ITSELF fed into a boolean test without await, report that specific use.)\n5. Non-Promise calls: ONLY flag calls that actually return a Promise — the callee is declared `async`, returns `Promise<...>`/`PromiseLike<...>`, or returns `new Promise(...)`. Do not flag synchronous functions, plain object/boolean/string getters, or type-only references.\n6. Services/high-order wrappers where the promise is intentionally awaited one line earlier and the variable is tested — the bug is specifically calling the async function WITHOUT await inside the boolean test.\n\nREPORT FIELDS:\n- fi",
+        "usage": {
+          "input": 0,
+          "output": 0,
+          "cacheRead": 0,
+          "cacheCreate": 0
+        },
+        "total": 0
+      },
+      {
+        "kind": "workflow",
+        "prompt": "You are auditing EXACTLY ONE TypeScript file for a specific bug pattern. Read the file at \"src/shared/db.ts\" in full before concluding.\n\nTARGET BUG PATTERN: missing `await` — a call to an async function (or any function returning a Promise/PromiseLike) whose result is used DIRECTLY in a boolean context:\n- `if (someAsync()) { ... }`\n- `!someAsync()`\n- `someAsync() && x`  or  `x || someAsync()`\n- `someAsync() ? a : b`\n- `while (someAsync())`, `do { ... } while (someAsync())`\n- `Boolean(someAsync())`, or any other guard where the Promise object itself is the tested value.\n\nBecause a Promise object is always truthy, these guards are silently broken:\n- `if (promise)` always takes the true-branch\n- `!promise` is always false (the guard never fires)\n- `promise && x` always evaluates `x`\n- `promise ? a : b` always picks `a`\n\nDO NOT REPORT — these are fine, ignore entirely:\n1. Awaited calls: `if (await someAsync())`, `!(await someAsync())`, `const r = await someAsync(); if (r)`, etc.\n2. Fire-and-forget / voided: `void someAsync();` or a bare `someAsync();` statement with no boolean use of its result.\n3. Returned promises: `return someAsync();` from an async function (the caller handles it).\n4. Chains with handlers: `someAsync().then(...)`, `someAsync().catch(...)`, `someAsync().finally(...)` — the promise is consumed via handlers, which is acceptable handling. (Only if the RESULT of such a chain is ITSELF fed into a boolean test without await, report that specific use.)\n5. Non-Promise calls: ONLY flag calls that actually return a Promise — the callee is declared `async`, returns `Promise<...>`/`PromiseLike<...>`, or returns `new Promise(...)`. Do not flag synchronous functions, plain object/boolean/string getters, or type-only references.\n6. Services/high-order wrappers where the promise is intentionally awaited one line earlier and the variable is tested — the bug is specifically calling the async function WITHOUT await inside the boolean test.\n\nREPORT FIELDS:\n- file: \"src/",
+        "usage": {
+          "input": 0,
+          "output": 0,
+          "cacheRead": 0,
+          "cacheCreate": 0
+        },
+        "total": 0
+      },
+      {
+        "kind": "workflow",
+        "prompt": "You are auditing EXACTLY ONE TypeScript file for a specific bug pattern. Read the file at \"src/notifications/digestBuilder.ts\" in full before concluding.\n\nTARGET BUG PATTERN: missing `await` — a call to an async function (or any function returning a Promise/PromiseLike) whose result is used DIRECTLY in a boolean context:\n- `if (someAsync()) { ... }`\n- `!someAsync()`\n- `someAsync() && x`  or  `x || someAsync()`\n- `someAsync() ? a : b`\n- `while (someAsync())`, `do { ... } while (someAsync())`\n- `Boolean(someAsync())`, or any other guard where the Promise object itself is the tested value.\n\nBecause a Promise object is always truthy, these guards are silently broken:\n- `if (promise)` always takes the true-branch\n- `!promise` is always false (the guard never fires)\n- `promise && x` always evaluates `x`\n- `promise ? a : b` always picks `a`\n\nDO NOT REPORT — these are fine, ignore entirely:\n1. Awaited calls: `if (await someAsync())`, `!(await someAsync())`, `const r = await someAsync(); if (r)`, etc.\n2. Fire-and-forget / voided: `void someAsync();` or a bare `someAsync();` statement with no boolean use of its result.\n3. Returned promises: `return someAsync();` from an async function (the caller handles it).\n4. Chains with handlers: `someAsync().then(...)`, `someAsync().catch(...)`, `someAsync().finally(...)` — the promise is consumed via handlers, which is acceptable handling. (Only if the RESULT of such a chain is ITSELF fed into a boolean test without await, report that specific use.)\n5. Non-Promise calls: ONLY flag calls that actually return a Promise — the callee is declared `async`, returns `Promise<...>`/`PromiseLike<...>`, or returns `new Promise(...)`. Do not flag synchronous functions, plain object/boolean/string getters, or type-only references.\n6. Services/high-order wrappers where the promise is intentionally awaited one line earlier and the variable is tested — the bug is specifically calling the async function WITHOUT await inside the boolean test.\n\nREPORT FIE",
+        "usage": {
+          "input": 0,
+          "output": 0,
+          "cacheRead": 0,
+          "cacheCreate": 0
+        },
+        "total": 0
+      },
+      {
+        "kind": "workflow",
+        "prompt": "You are auditing EXACTLY ONE TypeScript file for a specific bug pattern. Read the file at \"src/notifications/emailService.ts\" in full before concluding.\n\nTARGET BUG PATTERN: missing `await` — a call to an async function (or any function returning a Promise/PromiseLike) whose result is used DIRECTLY in a boolean context:\n- `if (someAsync()) { ... }`\n- `!someAsync()`\n- `someAsync() && x`  or  `x || someAsync()`\n- `someAsync() ? a : b`\n- `while (someAsync())`, `do { ... } while (someAsync())`\n- `Boolean(someAsync())`, or any other guard where the Promise object itself is the tested value.\n\nBecause a Promise object is always truthy, these guards are silently broken:\n- `if (promise)` always takes the true-branch\n- `!promise` is always false (the guard never fires)\n- `promise && x` always evaluates `x`\n- `promise ? a : b` always picks `a`\n\nDO NOT REPORT — these are fine, ignore entirely:\n1. Awaited calls: `if (await someAsync())`, `!(await someAsync())`, `const r = await someAsync(); if (r)`, etc.\n2. Fire-and-forget / voided: `void someAsync();` or a bare `someAsync();` statement with no boolean use of its result.\n3. Returned promises: `return someAsync();` from an async function (the caller handles it).\n4. Chains with handlers: `someAsync().then(...)`, `someAsync().catch(...)`, `someAsync().finally(...)` — the promise is consumed via handlers, which is acceptable handling. (Only if the RESULT of such a chain is ITSELF fed into a boolean test without await, report that specific use.)\n5. Non-Promise calls: ONLY flag calls that actually return a Promise — the callee is declared `async`, returns `Promise<...>`/`PromiseLike<...>`, or returns `new Promise(...)`. Do not flag synchronous functions, plain object/boolean/string getters, or type-only references.\n6. Services/high-order wrappers where the promise is intentionally awaited one line earlier and the variable is tested — the bug is specifically calling the async function WITHOUT await inside the boolean test.\n\nREPORT FIEL",
+        "usage": {
+          "input": 0,
+          "output": 0,
+          "cacheRead": 0,
+          "cacheCreate": 0
+        },
+        "total": 0
+      },
+      {
+        "kind": "workflow",
+        "prompt": "You are auditing EXACTLY ONE TypeScript file for a specific bug pattern. Read the file at \"src/users/profileService.ts\" in full before concluding.\n\nTARGET BUG PATTERN: missing `await` — a call to an async function (or any function returning a Promise/PromiseLike) whose result is used DIRECTLY in a boolean context:\n- `if (someAsync()) { ... }`\n- `!someAsync()`\n- `someAsync() && x`  or  `x || someAsync()`\n- `someAsync() ? a : b`\n- `while (someAsync())`, `do { ... } while (someAsync())`\n- `Boolean(someAsync())`, or any other guard where the Promise object itself is the tested value.\n\nBecause a Promise object is always truthy, these guards are silently broken:\n- `if (promise)` always takes the true-branch\n- `!promise` is always false (the guard never fires)\n- `promise && x` always evaluates `x`\n- `promise ? a : b` always picks `a`\n\nDO NOT REPORT — these are fine, ignore entirely:\n1. Awaited calls: `if (await someAsync())`, `!(await someAsync())`, `const r = await someAsync(); if (r)`, etc.\n2. Fire-and-forget / voided: `void someAsync();` or a bare `someAsync();` statement with no boolean use of its result.\n3. Returned promises: `return someAsync();` from an async function (the caller handles it).\n4. Chains with handlers: `someAsync().then(...)`, `someAsync().catch(...)`, `someAsync().finally(...)` — the promise is consumed via handlers, which is acceptable handling. (Only if the RESULT of such a chain is ITSELF fed into a boolean test without await, report that specific use.)\n5. Non-Promise calls: ONLY flag calls that actually return a Promise — the callee is declared `async`, returns `Promise<...>`/`PromiseLike<...>`, or returns `new Promise(...)`. Do not flag synchronous functions, plain object/boolean/string getters, or type-only references.\n6. Services/high-order wrappers where the promise is intentionally awaited one line earlier and the variable is tested — the bug is specifically calling the async function WITHOUT await inside the boolean test.\n\nREPORT FIELDS:\n- ",
+        "usage": {
+          "input": 1514,
+          "output": 79,
+          "cacheRead": 17408,
+          "cacheCreate": 0
+        },
+        "total": 19001
+      },
+      {
+        "kind": "workflow",
+        "prompt": "You are auditing EXACTLY ONE TypeScript file for a specific bug pattern. Read the file at \"src/shared/types.ts\" in full before concluding.\n\nTARGET BUG PATTERN: missing `await` — a call to an async function (or any function returning a Promise/PromiseLike) whose result is used DIRECTLY in a boolean context:\n- `if (someAsync()) { ... }`\n- `!someAsync()`\n- `someAsync() && x`  or  `x || someAsync()`\n- `someAsync() ? a : b`\n- `while (someAsync())`, `do { ... } while (someAsync())`\n- `Boolean(someAsync())`, or any other guard where the Promise object itself is the tested value.\n\nBecause a Promise object is always truthy, these guards are silently broken:\n- `if (promise)` always takes the true-branch\n- `!promise` is always false (the guard never fires)\n- `promise && x` always evaluates `x`\n- `promise ? a : b` always picks `a`\n\nDO NOT REPORT — these are fine, ignore entirely:\n1. Awaited calls: `if (await someAsync())`, `!(await someAsync())`, `const r = await someAsync(); if (r)`, etc.\n2. Fire-and-forget / voided: `void someAsync();` or a bare `someAsync();` statement with no boolean use of its result.\n3. Returned promises: `return someAsync();` from an async function (the caller handles it).\n4. Chains with handlers: `someAsync().then(...)`, `someAsync().catch(...)`, `someAsync().finally(...)` — the promise is consumed via handlers, which is acceptable handling. (Only if the RESULT of such a chain is ITSELF fed into a boolean test without await, report that specific use.)\n5. Non-Promise calls: ONLY flag calls that actually return a Promise — the callee is declared `async`, returns `Promise<...>`/`PromiseLike<...>`, or returns `new Promise(...)`. Do not flag synchronous functions, plain object/boolean/string getters, or type-only references.\n6. Services/high-order wrappers where the promise is intentionally awaited one line earlier and the variable is tested — the bug is specifically calling the async function WITHOUT await inside the boolean test.\n\nREPORT FIELDS:\n- file: \"s",
+        "usage": {
+          "input": 0,
+          "output": 0,
+          "cacheRead": 0,
+          "cacheCreate": 0
+        },
+        "total": 0
+      },
+      {
+        "kind": "workflow",
+        "prompt": "You are auditing EXACTLY ONE TypeScript file for a specific bug pattern. Read the file at \"src/pricing/discountEngine.ts\" in full before concluding.\n\nTARGET BUG PATTERN: missing `await` — a call to an async function (or any function returning a Promise/PromiseLike) whose result is used DIRECTLY in a boolean context:\n- `if (someAsync()) { ... }`\n- `!someAsync()`\n- `someAsync() && x`  or  `x || someAsync()`\n- `someAsync() ? a : b`\n- `while (someAsync())`, `do { ... } while (someAsync())`\n- `Boolean(someAsync())`, or any other guard where the Promise object itself is the tested value.\n\nBecause a Promise object is always truthy, these guards are silently broken:\n- `if (promise)` always takes the true-branch\n- `!promise` is always false (the guard never fires)\n- `promise && x` always evaluates `x`\n- `promise ? a : b` always picks `a`\n\nDO NOT REPORT — these are fine, ignore entirely:\n1. Awaited calls: `if (await someAsync())`, `!(await someAsync())`, `const r = await someAsync(); if (r)`, etc.\n2. Fire-and-forget / voided: `void someAsync();` or a bare `someAsync();` statement with no boolean use of its result.\n3. Returned promises: `return someAsync();` from an async function (the caller handles it).\n4. Chains with handlers: `someAsync().then(...)`, `someAsync().catch(...)`, `someAsync().finally(...)` — the promise is consumed via handlers, which is acceptable handling. (Only if the RESULT of such a chain is ITSELF fed into a boolean test without await, report that specific use.)\n5. Non-Promise calls: ONLY flag calls that actually return a Promise — the callee is declared `async`, returns `Promise<...>`/`PromiseLike<...>`, or returns `new Promise(...)`. Do not flag synchronous functions, plain object/boolean/string getters, or type-only references.\n6. Services/high-order wrappers where the promise is intentionally awaited one line earlier and the variable is tested — the bug is specifically calling the async function WITHOUT await inside the boolean test.\n\nREPORT FIELDS:\n",
+        "usage": {
+          "input": 0,
+          "output": 0,
+          "cacheRead": 0,
+          "cacheCreate": 0
+        },
+        "total": 0
+      },
+      {
+        "kind": "workflow",
+        "prompt": "You are auditing EXACTLY ONE TypeScript file for a specific bug pattern. Read the file at \"src/reporting/metricsAggregator.ts\" in full before concluding.\n\nTARGET BUG PATTERN: missing `await` — a call to an async function (or any function returning a Promise/PromiseLike) whose result is used DIRECTLY in a boolean context:\n- `if (someAsync()) { ... }`\n- `!someAsync()`\n- `someAsync() && x`  or  `x || someAsync()`\n- `someAsync() ? a : b`\n- `while (someAsync())`, `do { ... } while (someAsync())`\n- `Boolean(someAsync())`, or any other guard where the Promise object itself is the tested value.\n\nBecause a Promise object is always truthy, these guards are silently broken:\n- `if (promise)` always takes the true-branch\n- `!promise` is always false (the guard never fires)\n- `promise && x` always evaluates `x`\n- `promise ? a : b` always picks `a`\n\nDO NOT REPORT — these are fine, ignore entirely:\n1. Awaited calls: `if (await someAsync())`, `!(await someAsync())`, `const r = await someAsync(); if (r)`, etc.\n2. Fire-and-forget / voided: `void someAsync();` or a bare `someAsync();` statement with no boolean use of its result.\n3. Returned promises: `return someAsync();` from an async function (the caller handles it).\n4. Chains with handlers: `someAsync().then(...)`, `someAsync().catch(...)`, `someAsync().finally(...)` — the promise is consumed via handlers, which is acceptable handling. (Only if the RESULT of such a chain is ITSELF fed into a boolean test without await, report that specific use.)\n5. Non-Promise calls: ONLY flag calls that actually return a Promise — the callee is declared `async`, returns `Promise<...>`/`PromiseLike<...>`, or returns `new Promise(...)`. Do not flag synchronous functions, plain object/boolean/string getters, or type-only references.\n6. Services/high-order wrappers where the promise is intentionally awaited one line earlier and the variable is tested — the bug is specifically calling the async function WITHOUT await inside the boolean test.\n\nREPORT FIE",
+        "usage": {
+          "input": 0,
+          "output": 0,
+          "cacheRead": 0,
+          "cacheCreate": 0
+        },
+        "total": 0
+      },
+      {
+        "kind": "workflow",
+        "prompt": "You are auditing EXACTLY ONE TypeScript file for a specific bug pattern. Read the file at \"src/reporting/salesReporter.ts\" in full before concluding.\n\nTARGET BUG PATTERN: missing `await` — a call to an async function (or any function returning a Promise/PromiseLike) whose result is used DIRECTLY in a boolean context:\n- `if (someAsync()) { ... }`\n- `!someAsync()`\n- `someAsync() && x`  or  `x || someAsync()`\n- `someAsync() ? a : b`\n- `while (someAsync())`, `do { ... } while (someAsync())`\n- `Boolean(someAsync())`, or any other guard where the Promise object itself is the tested value.\n\nBecause a Promise object is always truthy, these guards are silently broken:\n- `if (promise)` always takes the true-branch\n- `!promise` is always false (the guard never fires)\n- `promise && x` always evaluates `x`\n- `promise ? a : b` always picks `a`\n\nDO NOT REPORT — these are fine, ignore entirely:\n1. Awaited calls: `if (await someAsync())`, `!(await someAsync())`, `const r = await someAsync(); if (r)`, etc.\n2. Fire-and-forget / voided: `void someAsync();` or a bare `someAsync();` statement with no boolean use of its result.\n3. Returned promises: `return someAsync();` from an async function (the caller handles it).\n4. Chains with handlers: `someAsync().then(...)`, `someAsync().catch(...)`, `someAsync().finally(...)` — the promise is consumed via handlers, which is acceptable handling. (Only if the RESULT of such a chain is ITSELF fed into a boolean test without await, report that specific use.)\n5. Non-Promise calls: ONLY flag calls that actually return a Promise — the callee is declared `async`, returns `Promise<...>`/`PromiseLike<...>`, or returns `new Promise(...)`. Do not flag synchronous functions, plain object/boolean/string getters, or type-only references.\n6. Services/high-order wrappers where the promise is intentionally awaited one line earlier and the variable is tested — the bug is specifically calling the async function WITHOUT await inside the boolean test.\n\nREPORT FIELDS:",
+        "usage": {
+          "input": 0,
+          "output": 0,
+          "cacheRead": 0,
+          "cacheCreate": 0
+        },
+        "total": 0
+      },
+      {
+        "kind": "workflow",
+        "prompt": "You are auditing EXACTLY ONE TypeScript file for a specific bug pattern. Read the file at \"src/pricing/currencyRates.ts\" in full before concluding.\n\nTARGET BUG PATTERN: missing `await` — a call to an async function (or any function returning a Promise/PromiseLike) whose result is used DIRECTLY in a boolean context:\n- `if (someAsync()) { ... }`\n- `!someAsync()`\n- `someAsync() && x`  or  `x || someAsync()`\n- `someAsync() ? a : b`\n- `while (someAsync())`, `do { ... } while (someAsync())`\n- `Boolean(someAsync())`, or any other guard where the Promise object itself is the tested value.\n\nBecause a Promise object is always truthy, these guards are silently broken:\n- `if (promise)` always takes the true-branch\n- `!promise` is always false (the guard never fires)\n- `promise && x` always evaluates `x`\n- `promise ? a : b` always picks `a`\n\nDO NOT REPORT — these are fine, ignore entirely:\n1. Awaited calls: `if (await someAsync())`, `!(await someAsync())`, `const r = await someAsync(); if (r)`, etc.\n2. Fire-and-forget / voided: `void someAsync();` or a bare `someAsync();` statement with no boolean use of its result.\n3. Returned promises: `return someAsync();` from an async function (the caller handles it).\n4. Chains with handlers: `someAsync().then(...)`, `someAsync().catch(...)`, `someAsync().finally(...)` — the promise is consumed via handlers, which is acceptable handling. (Only if the RESULT of such a chain is ITSELF fed into a boolean test without await, report that specific use.)\n5. Non-Promise calls: ONLY flag calls that actually return a Promise — the callee is declared `async`, returns `Promise<...>`/`PromiseLike<...>`, or returns `new Promise(...)`. Do not flag synchronous functions, plain object/boolean/string getters, or type-only references.\n6. Services/high-order wrappers where the promise is intentionally awaited one line earlier and the variable is tested — the bug is specifically calling the async function WITHOUT await inside the boolean test.\n\nREPORT FIELDS:\n-",
+        "usage": {
+          "input": 0,
+          "output": 0,
+          "cacheRead": 0,
+          "cacheCreate": 0
+        },
+        "total": 0
+      },
+      {
+        "kind": "workflow",
+        "prompt": "You are auditing EXACTLY ONE TypeScript file for a specific bug pattern. Read the file at \"src/users/authService.ts\" in full before concluding.\n\nTARGET BUG PATTERN: missing `await` — a call to an async function (or any function returning a Promise/PromiseLike) whose result is used DIRECTLY in a boolean context:\n- `if (someAsync()) { ... }`\n- `!someAsync()`\n- `someAsync() && x`  or  `x || someAsync()`\n- `someAsync() ? a : b`\n- `while (someAsync())`, `do { ... } while (someAsync())`\n- `Boolean(someAsync())`, or any other guard where the Promise object itself is the tested value.\n\nBecause a Promise object is always truthy, these guards are silently broken:\n- `if (promise)` always takes the true-branch\n- `!promise` is always false (the guard never fires)\n- `promise && x` always evaluates `x`\n- `promise ? a : b` always picks `a`\n\nDO NOT REPORT — these are fine, ignore entirely:\n1. Awaited calls: `if (await someAsync())`, `!(await someAsync())`, `const r = await someAsync(); if (r)`, etc.\n2. Fire-and-forget / voided: `void someAsync();` or a bare `someAsync();` statement with no boolean use of its result.\n3. Returned promises: `return someAsync();` from an async function (the caller handles it).\n4. Chains with handlers: `someAsync().then(...)`, `someAsync().catch(...)`, `someAsync().finally(...)` — the promise is consumed via handlers, which is acceptable handling. (Only if the RESULT of such a chain is ITSELF fed into a boolean test without await, report that specific use.)\n5. Non-Promise calls: ONLY flag calls that actually return a Promise — the callee is declared `async`, returns `Promise<...>`/`PromiseLike<...>`, or returns `new Promise(...)`. Do not flag synchronous functions, plain object/boolean/string getters, or type-only references.\n6. Services/high-order wrappers where the promise is intentionally awaited one line earlier and the variable is tested — the bug is specifically calling the async function WITHOUT await inside the boolean test.\n\nREPORT FIELDS:\n- fil",
+        "usage": {
+          "input": 0,
+          "output": 0,
+          "cacheRead": 0,
+          "cacheCreate": 0
+        },
+        "total": 0
+      },
+      {
+        "kind": "workflow",
+        "prompt": "You are auditing EXACTLY ONE TypeScript file for a specific bug pattern. Read the file at \"src/orders/fulfillmentService.ts\" in full before concluding.\n\nTARGET BUG PATTERN: missing `await` — a call to an async function (or any function returning a Promise/PromiseLike) whose result is used DIRECTLY in a boolean context:\n- `if (someAsync()) { ... }`\n- `!someAsync()`\n- `someAsync() && x`  or  `x || someAsync()`\n- `someAsync() ? a : b`\n- `while (someAsync())`, `do { ... } while (someAsync())`\n- `Boolean(someAsync())`, or any other guard where the Promise object itself is the tested value.\n\nBecause a Promise object is always truthy, these guards are silently broken:\n- `if (promise)` always takes the true-branch\n- `!promise` is always false (the guard never fires)\n- `promise && x` always evaluates `x`\n- `promise ? a : b` always picks `a`\n\nDO NOT REPORT — these are fine, ignore entirely:\n1. Awaited calls: `if (await someAsync())`, `!(await someAsync())`, `const r = await someAsync(); if (r)`, etc.\n2. Fire-and-forget / voided: `void someAsync();` or a bare `someAsync();` statement with no boolean use of its result.\n3. Returned promises: `return someAsync();` from an async function (the caller handles it).\n4. Chains with handlers: `someAsync().then(...)`, `someAsync().catch(...)`, `someAsync().finally(...)` — the promise is consumed via handlers, which is acceptable handling. (Only if the RESULT of such a chain is ITSELF fed into a boolean test without await, report that specific use.)\n5. Non-Promise calls: ONLY flag calls that actually return a Promise — the callee is declared `async`, returns `Promise<...>`/`PromiseLike<...>`, or returns `new Promise(...)`. Do not flag synchronous functions, plain object/boolean/string getters, or type-only references.\n6. Services/high-order wrappers where the promise is intentionally awaited one line earlier and the variable is tested — the bug is specifically calling the async function WITHOUT await inside the boolean test.\n\nREPORT FIELD",
+        "usage": {
+          "input": 1522,
+          "output": 93,
+          "cacheRead": 17408,
+          "cacheCreate": 0
+        },
+        "total": 19023
+      },
+      {
+        "kind": "workflow",
+        "prompt": "You are auditing EXACTLY ONE TypeScript file for a specific bug pattern. Read the file at \"src/pricing/priceCalculator.ts\" in full before concluding.\n\nTARGET BUG PATTERN: missing `await` — a call to an async function (or any function returning a Promise/PromiseLike) whose result is used DIRECTLY in a boolean context:\n- `if (someAsync()) { ... }`\n- `!someAsync()`\n- `someAsync() && x`  or  `x || someAsync()`\n- `someAsync() ? a : b`\n- `while (someAsync())`, `do { ... } while (someAsync())`\n- `Boolean(someAsync())`, or any other guard where the Promise object itself is the tested value.\n\nBecause a Promise object is always truthy, these guards are silently broken:\n- `if (promise)` always takes the true-branch\n- `!promise` is always false (the guard never fires)\n- `promise && x` always evaluates `x`\n- `promise ? a : b` always picks `a`\n\nDO NOT REPORT — these are fine, ignore entirely:\n1. Awaited calls: `if (await someAsync())`, `!(await someAsync())`, `const r = await someAsync(); if (r)`, etc.\n2. Fire-and-forget / voided: `void someAsync();` or a bare `someAsync();` statement with no boolean use of its result.\n3. Returned promises: `return someAsync();` from an async function (the caller handles it).\n4. Chains with handlers: `someAsync().then(...)`, `someAsync().catch(...)`, `someAsync().finally(...)` — the promise is consumed via handlers, which is acceptable handling. (Only if the RESULT of such a chain is ITSELF fed into a boolean test without await, report that specific use.)\n5. Non-Promise calls: ONLY flag calls that actually return a Promise — the callee is declared `async`, returns `Promise<...>`/`PromiseLike<...>`, or returns `new Promise(...)`. Do not flag synchronous functions, plain object/boolean/string getters, or type-only references.\n6. Services/high-order wrappers where the promise is intentionally awaited one line earlier and the variable is tested — the bug is specifically calling the async function WITHOUT await inside the boolean test.\n\nREPORT FIELDS:",
+        "usage": {
+          "input": 0,
+          "output": 0,
+          "cacheRead": 0,
+          "cacheCreate": 0
+        },
+        "total": 0
+      },
+      {
+        "kind": "workflow",
+        "prompt": "You are auditing EXACTLY ONE TypeScript file for a specific bug pattern. Read the file at \"src/inventory/stockService.ts\" in full before concluding.\n\nTARGET BUG PATTERN: missing `await` — a call to an async function (or any function returning a Promise/PromiseLike) whose result is used DIRECTLY in a boolean context:\n- `if (someAsync()) { ... }`\n- `!someAsync()`\n- `someAsync() && x`  or  `x || someAsync()`\n- `someAsync() ? a : b`\n- `while (someAsync())`, `do { ... } while (someAsync())`\n- `Boolean(someAsync())`, or any other guard where the Promise object itself is the tested value.\n\nBecause a Promise object is always truthy, these guards are silently broken:\n- `if (promise)` always takes the true-branch\n- `!promise` is always false (the guard never fires)\n- `promise && x` always evaluates `x`\n- `promise ? a : b` always picks `a`\n\nDO NOT REPORT — these are fine, ignore entirely:\n1. Awaited calls: `if (await someAsync())`, `!(await someAsync())`, `const r = await someAsync(); if (r)`, etc.\n2. Fire-and-forget / voided: `void someAsync();` or a bare `someAsync();` statement with no boolean use of its result.\n3. Returned promises: `return someAsync();` from an async function (the caller handles it).\n4. Chains with handlers: `someAsync().then(...)`, `someAsync().catch(...)`, `someAsync().finally(...)` — the promise is consumed via handlers, which is acceptable handling. (Only if the RESULT of such a chain is ITSELF fed into a boolean test without await, report that specific use.)\n5. Non-Promise calls: ONLY flag calls that actually return a Promise — the callee is declared `async`, returns `Promise<...>`/`PromiseLike<...>`, or returns `new Promise(...)`. Do not flag synchronous functions, plain object/boolean/string getters, or type-only references.\n6. Services/high-order wrappers where the promise is intentionally awaited one line earlier and the variable is tested — the bug is specifically calling the async function WITHOUT await inside the boolean test.\n\nREPORT FIELDS:\n",
+        "usage": {
+          "input": 1518,
+          "output": 78,
+          "cacheRead": 17408,
+          "cacheCreate": 0
+        },
+        "total": 19004
+      },
+      {
+        "kind": "workflow",
+        "prompt": "You are auditing EXACTLY ONE TypeScript file for a specific bug pattern. Read the file at \"src/inventory/reservationService.ts\" in full before concluding.\n\nTARGET BUG PATTERN: missing `await` — a call to an async function (or any function returning a Promise/PromiseLike) whose result is used DIRECTLY in a boolean context:\n- `if (someAsync()) { ... }`\n- `!someAsync()`\n- `someAsync() && x`  or  `x || someAsync()`\n- `someAsync() ? a : b`\n- `while (someAsync())`, `do { ... } while (someAsync())`\n- `Boolean(someAsync())`, or any other guard where the Promise object itself is the tested value.\n\nBecause a Promise object is always truthy, these guards are silently broken:\n- `if (promise)` always takes the true-branch\n- `!promise` is always false (the guard never fires)\n- `promise && x` always evaluates `x`\n- `promise ? a : b` always picks `a`\n\nDO NOT REPORT — these are fine, ignore entirely:\n1. Awaited calls: `if (await someAsync())`, `!(await someAsync())`, `const r = await someAsync(); if (r)`, etc.\n2. Fire-and-forget / voided: `void someAsync();` or a bare `someAsync();` statement with no boolean use of its result.\n3. Returned promises: `return someAsync();` from an async function (the caller handles it).\n4. Chains with handlers: `someAsync().then(...)`, `someAsync().catch(...)`, `someAsync().finally(...)` — the promise is consumed via handlers, which is acceptable handling. (Only if the RESULT of such a chain is ITSELF fed into a boolean test without await, report that specific use.)\n5. Non-Promise calls: ONLY flag calls that actually return a Promise — the callee is declared `async`, returns `Promise<...>`/`PromiseLike<...>`, or returns `new Promise(...)`. Do not flag synchronous functions, plain object/boolean/string getters, or type-only references.\n6. Services/high-order wrappers where the promise is intentionally awaited one line earlier and the variable is tested — the bug is specifically calling the async function WITHOUT await inside the boolean test.\n\nREPORT FI",
+        "usage": {
+          "input": 1518,
+          "output": 78,
+          "cacheRead": 17408,
+          "cacheCreate": 0
+        },
+        "total": 19004
+      },
+      {
+        "kind": "workflow",
+        "prompt": "You are auditing EXACTLY ONE TypeScript file for a specific bug pattern. Read the file at \"src/users/userService.ts\" in full before concluding.\n\nTARGET BUG PATTERN: missing `await` — a call to an async function (or any function returning a Promise/PromiseLike) whose result is used DIRECTLY in a boolean context:\n- `if (someAsync()) { ... }`\n- `!someAsync()`\n- `someAsync() && x`  or  `x || someAsync()`\n- `someAsync() ? a : b`\n- `while (someAsync())`, `do { ... } while (someAsync())`\n- `Boolean(someAsync())`, or any other guard where the Promise object itself is the tested value.\n\nBecause a Promise object is always truthy, these guards are silently broken:\n- `if (promise)` always takes the true-branch\n- `!promise` is always false (the guard never fires)\n- `promise && x` always evaluates `x`\n- `promise ? a : b` always picks `a`\n\nDO NOT REPORT — these are fine, ignore entirely:\n1. Awaited calls: `if (await someAsync())`, `!(await someAsync())`, `const r = await someAsync(); if (r)`, etc.\n2. Fire-and-forget / voided: `void someAsync();` or a bare `someAsync();` statement with no boolean use of its result.\n3. Returned promises: `return someAsync();` from an async function (the caller handles it).\n4. Chains with handlers: `someAsync().then(...)`, `someAsync().catch(...)`, `someAsync().finally(...)` — the promise is consumed via handlers, which is acceptable handling. (Only if the RESULT of such a chain is ITSELF fed into a boolean test without await, report that specific use.)\n5. Non-Promise calls: ONLY flag calls that actually return a Promise — the callee is declared `async`, returns `Promise<...>`/`PromiseLike<...>`, or returns `new Promise(...)`. Do not flag synchronous functions, plain object/boolean/string getters, or type-only references.\n6. Services/high-order wrappers where the promise is intentionally awaited one line earlier and the variable is tested — the bug is specifically calling the async function WITHOUT await inside the boolean test.\n\nREPORT FIELDS:\n- fil",
+        "usage": {
+          "input": 0,
+          "output": 0,
+          "cacheRead": 0,
+          "cacheCreate": 0
+        },
+        "total": 0
+      },
+      {
+        "kind": "workflow",
+        "prompt": "You are auditing EXACTLY ONE TypeScript file for a specific bug pattern. Read the file at \"src/notifications/smsService.ts\" in full before concluding.\n\nTARGET BUG PATTERN: missing `await` — a call to an async function (or any function returning a Promise/PromiseLike) whose result is used DIRECTLY in a boolean context:\n- `if (someAsync()) { ... }`\n- `!someAsync()`\n- `someAsync() && x`  or  `x || someAsync()`\n- `someAsync() ? a : b`\n- `while (someAsync())`, `do { ... } while (someAsync())`\n- `Boolean(someAsync())`, or any other guard where the Promise object itself is the tested value.\n\nBecause a Promise object is always truthy, these guards are silently broken:\n- `if (promise)` always takes the true-branch\n- `!promise` is always false (the guard never fires)\n- `promise && x` always evaluates `x`\n- `promise ? a : b` always picks `a`\n\nDO NOT REPORT — these are fine, ignore entirely:\n1. Awaited calls: `if (await someAsync())`, `!(await someAsync())`, `const r = await someAsync(); if (r)`, etc.\n2. Fire-and-forget / voided: `void someAsync();` or a bare `someAsync();` statement with no boolean use of its result.\n3. Returned promises: `return someAsync();` from an async function (the caller handles it).\n4. Chains with handlers: `someAsync().then(...)`, `someAsync().catch(...)`, `someAsync().finally(...)` — the promise is consumed via handlers, which is acceptable handling. (Only if the RESULT of such a chain is ITSELF fed into a boolean test without await, report that specific use.)\n5. Non-Promise calls: ONLY flag calls that actually return a Promise — the callee is declared `async`, returns `Promise<...>`/`PromiseLike<...>`, or returns `new Promise(...)`. Do not flag synchronous functions, plain object/boolean/string getters, or type-only references.\n6. Services/high-order wrappers where the promise is intentionally awaited one line earlier and the variable is tested — the bug is specifically calling the async function WITHOUT await inside the boolean test.\n\nREPORT FIELDS",
+        "usage": {
+          "input": 0,
+          "output": 0,
+          "cacheRead": 0,
+          "cacheCreate": 0
+        },
+        "total": 0
+      },
+      {
+        "kind": "workflow",
+        "prompt": "You are auditing EXACTLY ONE TypeScript file for a specific bug pattern. Read the file at \"src/reporting/auditTrail.ts\" in full before concluding.\n\nTARGET BUG PATTERN: missing `await` — a call to an async function (or any function returning a Promise/PromiseLike) whose result is used DIRECTLY in a boolean context:\n- `if (someAsync()) { ... }`\n- `!someAsync()`\n- `someAsync() && x`  or  `x || someAsync()`\n- `someAsync() ? a : b`\n- `while (someAsync())`, `do { ... } while (someAsync())`\n- `Boolean(someAsync())`, or any other guard where the Promise object itself is the tested value.\n\nBecause a Promise object is always truthy, these guards are silently broken:\n- `if (promise)` always takes the true-branch\n- `!promise` is always false (the guard never fires)\n- `promise && x` always evaluates `x`\n- `promise ? a : b` always picks `a`\n\nDO NOT REPORT — these are fine, ignore entirely:\n1. Awaited calls: `if (await someAsync())`, `!(await someAsync())`, `const r = await someAsync(); if (r)`, etc.\n2. Fire-and-forget / voided: `void someAsync();` or a bare `someAsync();` statement with no boolean use of its result.\n3. Returned promises: `return someAsync();` from an async function (the caller handles it).\n4. Chains with handlers: `someAsync().then(...)`, `someAsync().catch(...)`, `someAsync().finally(...)` — the promise is consumed via handlers, which is acceptable handling. (Only if the RESULT of such a chain is ITSELF fed into a boolean test without await, report that specific use.)\n5. Non-Promise calls: ONLY flag calls that actually return a Promise — the callee is declared `async`, returns `Promise<...>`/`PromiseLike<...>`, or returns `new Promise(...)`. Do not flag synchronous functions, plain object/boolean/string getters, or type-only references.\n6. Services/high-order wrappers where the promise is intentionally awaited one line earlier and the variable is tested — the bug is specifically calling the async function WITHOUT await inside the boolean test.\n\nREPORT FIELDS:\n- ",
+        "usage": {
+          "input": 0,
+          "output": 0,
+          "cacheRead": 0,
+          "cacheCreate": 0
+        },
+        "total": 0
+      },
+      {
+        "kind": "workflow",
+        "prompt": "You are auditing EXACTLY ONE TypeScript file for a specific bug pattern. Read the file at \"src/shared/logger.ts\" in full before concluding.\n\nTARGET BUG PATTERN: missing `await` — a call to an async function (or any function returning a Promise/PromiseLike) whose result is used DIRECTLY in a boolean context:\n- `if (someAsync()) { ... }`\n- `!someAsync()`\n- `someAsync() && x`  or  `x || someAsync()`\n- `someAsync() ? a : b`\n- `while (someAsync())`, `do { ... } while (someAsync())`\n- `Boolean(someAsync())`, or any other guard where the Promise object itself is the tested value.\n\nBecause a Promise object is always truthy, these guards are silently broken:\n- `if (promise)` always takes the true-branch\n- `!promise` is always false (the guard never fires)\n- `promise && x` always evaluates `x`\n- `promise ? a : b` always picks `a`\n\nDO NOT REPORT — these are fine, ignore entirely:\n1. Awaited calls: `if (await someAsync())`, `!(await someAsync())`, `const r = await someAsync(); if (r)`, etc.\n2. Fire-and-forget / voided: `void someAsync();` or a bare `someAsync();` statement with no boolean use of its result.\n3. Returned promises: `return someAsync();` from an async function (the caller handles it).\n4. Chains with handlers: `someAsync().then(...)`, `someAsync().catch(...)`, `someAsync().finally(...)` — the promise is consumed via handlers, which is acceptable handling. (Only if the RESULT of such a chain is ITSELF fed into a boolean test without await, report that specific use.)\n5. Non-Promise calls: ONLY flag calls that actually return a Promise — the callee is declared `async`, returns `Promise<...>`/`PromiseLike<...>`, or returns `new Promise(...)`. Do not flag synchronous functions, plain object/boolean/string getters, or type-only references.\n6. Services/high-order wrappers where the promise is intentionally awaited one line earlier and the variable is tested — the bug is specifically calling the async function WITHOUT await inside the boolean test.\n\nREPORT FIELDS:\n- file: \"",
+        "usage": {
+          "input": 0,
+          "output": 0,
+          "cacheRead": 0,
+          "cacheCreate": 0
+        },
+        "total": 0
+      },
+      {
+        "kind": "workflow",
+        "prompt": "You are auditing EXACTLY ONE TypeScript file for a specific bug pattern. Read the file at \"src/orders/returnsService.ts\" in full before concluding.\n\nTARGET BUG PATTERN: missing `await` — a call to an async function (or any function returning a Promise/PromiseLike) whose result is used DIRECTLY in a boolean context:\n- `if (someAsync()) { ... }`\n- `!someAsync()`\n- `someAsync() && x`  or  `x || someAsync()`\n- `someAsync() ? a : b`\n- `while (someAsync())`, `do { ... } while (someAsync())`\n- `Boolean(someAsync())`, or any other guard where the Promise object itself is the tested value.\n\nBecause a Promise object is always truthy, these guards are silently broken:\n- `if (promise)` always takes the true-branch\n- `!promise` is always false (the guard never fires)\n- `promise && x` always evaluates `x`\n- `promise ? a : b` always picks `a`\n\nDO NOT REPORT — these are fine, ignore entirely:\n1. Awaited calls: `if (await someAsync())`, `!(await someAsync())`, `const r = await someAsync(); if (r)`, etc.\n2. Fire-and-forget / voided: `void someAsync();` or a bare `someAsync();` statement with no boolean use of its result.\n3. Returned promises: `return someAsync();` from an async function (the caller handles it).\n4. Chains with handlers: `someAsync().then(...)`, `someAsync().catch(...)`, `someAsync().finally(...)` — the promise is consumed via handlers, which is acceptable handling. (Only if the RESULT of such a chain is ITSELF fed into a boolean test without await, report that specific use.)\n5. Non-Promise calls: ONLY flag calls that actually return a Promise — the callee is declared `async`, returns `Promise<...>`/`PromiseLike<...>`, or returns `new Promise(...)`. Do not flag synchronous functions, plain object/boolean/string getters, or type-only references.\n6. Services/high-order wrappers where the promise is intentionally awaited one line earlier and the variable is tested — the bug is specifically calling the async function WITHOUT await inside the boolean test.\n\nREPORT FIELDS:\n-",
+        "usage": {
+          "input": 0,
+          "output": 0,
+          "cacheRead": 0,
+          "cacheCreate": 0
+        },
+        "total": 0
+      },
+      {
+        "kind": "workflow",
+        "prompt": "",
+        "usage": {
+          "input": 0,
+          "output": 0,
+          "cacheRead": 0,
+          "cacheCreate": 0
+        },
+        "total": 0
+      }
+    ],
+    "subagentsTotal": 76032,
+    "taskSpawns": [],
+    "filesAudited": [
+      "src/notifications/pushService.ts",
+      "src/index.ts",
+      "src/orders/orderService.ts",
+      "src/inventory/supplierSync.ts",
+      "src/pricing/promoCodes.ts",
+      "src/shared/db.ts",
+      "src/notifications/digestBuilder.ts",
+      "src/notifications/emailService.ts",
+      "src/users/profileService.ts",
+      "src/shared/types.ts",
+      "src/pricing/discountEngine.ts",
+      "src/reporting/metricsAggregator.ts",
+      "src/reporting/salesReporter.ts",
+      "src/pricing/currencyRates.ts",
+      "src/users/authService.ts",
+      "src/orders/fulfillmentService.ts",
+      "src/pricing/priceCalculator.ts",
+      "src/inventory/stockService.ts",
+      "src/inventory/reservationService.ts",
+      "src/users/userService.ts",
+      "src/notifications/smsService.ts",
+      "src/reporting/auditTrail.ts",
+      "src/shared/logger.ts",
+      "src/orders/returnsService.ts"
+    ],
+    "grandTotal": 302896,
+    "report": "Both verified clean — `metricsAggregator.ts:25` properly awaits `isCacheFresh(...)`, and `userService.ts:13` properly awaits `db.users.find(id)`. My independent grep cross-check of every boolean context in the tree found the exact same six sites and nothing else. The report is verified.\n\n## Audit report: missing `await` in boolean context\n\n**Scope:** all 24 TypeScript files under `src/` (one agent per file, 0 errors). **6 findings** in 6 files, all confirmed against source. Every one is the same bug shape: the result of an async call is assigned to a variable *without* `await`, and that variable is then tested as a boolean. Since a `Promise` object is always truthy, `!x` is always `false` — the guard never fires.\n\n### Findings (by severity)\n\n**1. `src/users/authService.ts:37` — authorization check silently passes (security)**\n```ts\nconst allowed = hasPermission(user, action)      // line 36, missing await\nif (!allowed) { throw new ForbiddenError(...) }  // guard never fires\n```\nA Promise is always truthy, so `!allowed` is always false — **unauthorized users are never denied**. This is the `SEC-12` gate the comment explicitly references. Fix: `const allowed = await hasPermission(user, action)`.\n\n**2. `src/orders/fulfillmentService.ts:27` — out-of-stock orders always ship (WMS-77 phantom shipments)**\n```ts\nconst ok = hasStock(item.sku, item.qty)          // line 26, missing await\nif (!ok) { throw new OutOfStockError(...) }      // never throws\n```\nThe stock guard never fires, so undersupplied lines are shipped and stock isn't validated before the shipment is created.\n\n**3. `src/pricing/promoCodes.ts:17` — promo codes never applied (FIN-27)**\n```ts\nconst stale = promoIsStale(code)                 // line 16, missing await\nif (!stale) { /* discount */ }                   // always false\n```\n`promoIsStale` resolves to `true` for unknown/expired codes, but here it returns a *pending Promise* — always truthy — so `!stale` is always false and **even a valid code keeps the original total**.\n\n**4. `src/inventory/reservationService.ts:16` — reservations always returned instead of created (INV-118)**\n```ts\nconst already = hasActiveReservation(orderId)    // line 15, missing await\nif (!already) { /* insert reservation */ }       // never runs\n```\nBecause `!already` is always false, the insert branch is dead and the function always returns the \"existing\" lookup — for a fresh order that's no row, so the caller gets a **non-existent reservation**.\n\n**5. `src/notifications/digestBuilder.ts:22` — no digests ever sent (CRM-204)**\n```ts\nconst sent = hasDigestBeenSent(id)               // line 21, missing await\nif (!sent) { /* compose + stage digest */ }      // never runs\n```\n`!sent` is always false, so the digest body is never composed, staged, or recorded — despite the dedup contract, **no user receives a digest**.\n\n**6. `src/orders/returnsService.ts:52` — auto-approval dead (FIN-31)**\n```ts\nconst blocked = autoApprovalBlocked(orderId)     // line 51, missing await\nif (!blocked) { /* auto-approve refunds */ }     // never runs\n```\nThe function always returns `false`, so eligible small in-window refunds are never auto-approved and always wait for a human.\n\n### Clean files\n18 files clean, including the near-miss in `src/reporting/metricsAggregator.ts:25` (awaits `isCacheFresh` correctly) and `src/users/userService.ts` (awaits correctly). No fire-and-forget, `.catch()`-handled, or returned-promise cases were mis-flagged.\n\nNo files were modified — read-only audit throughout. Fix for all six is uniform: add `await` at the assignment site (`src/users/authService.ts:36`, `src/orders/fulfillmentService.ts:26`, `src/pricing/promoCodes.ts:16`, `src/inventory/reservationService.ts:15`, `src/notifications/digestBuilder.ts:21`, `src/orders/returnsService.ts:51`).",
+    "workflowScripts": [
+      "audit-missing-await-boolean-wf_adf2ad67-288.js"
+    ]
+  }
+]

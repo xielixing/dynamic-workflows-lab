@@ -1,0 +1,16 @@
+[
+  {
+    "arm": "nl",
+    "run": 1,
+    "sessionId": "ae6f648e-99fe-4942-9605-3fe6cd1134bc",
+    "durationMs": 119602,
+    "exit": 0
+  },
+  {
+    "arm": "wf",
+    "run": 1,
+    "sessionId": "5a325554-db06-4219-800d-b530751ad68e",
+    "durationMs": 158512,
+    "exit": 0
+  }
+]

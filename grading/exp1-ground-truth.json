@@ -1,0 +1,55 @@
+{
+  "pattern": "missing-await-boolean-context",
+  "description": "An async call is made without await and its Promise is used in boolean context (!x, if(x)), so the guard always/never fires.",
+  "fixtures": [
+    {
+      "file": "src/users/authService.ts",
+      "line": 36,
+      "call": "hasPermission",
+      "function": "assertCanManage",
+      "impact": "ForbiddenError never thrown; permission gate defeated"
+    },
+    {
+      "file": "src/pricing/promoCodes.ts",
+      "line": 16,
+      "call": "promoIsStale",
+      "function": "applyPromo",
+      "impact": "expired promo codes still apply their discount"
+    },
+    {
+      "file": "src/inventory/reservationService.ts",
+      "line": 15,
+      "call": "hasActiveReservation",
+      "function": "reserveForOrder",
+      "impact": "idempotency contract broken; duplicate reservations"
+    },
+    {
+      "file": "src/orders/fulfillmentService.ts",
+      "line": 26,
+      "call": "hasStock",
+      "function": "fulfillOrder",
+      "impact": "orders ship without stock check (phantom shipments)"
+    },
+    {
+      "file": "src/notifications/digestBuilder.ts",
+      "line": 21,
+      "call": "hasDigestBeenSent",
+      "function": "buildDigestsFor",
+      "impact": "duplicate digests sent every cycle"
+    },
+    {
+      "file": "src/orders/returnsService.ts",
+      "line": 51,
+      "call": "autoApprovalBlocked",
+      "function": "autoApproveIfEligible",
+      "impact": "finance gate defeated; any pending refund auto-approves"
+    }
+  ],
+  "decoys": [
+    "src/reporting/auditTrail.ts: void db.events.insert(event).catch(...) — intentional fire-and-forget (AUD-9)",
+    "src/pricing/currencyRates.ts: return of awaited values, Promise handled by caller",
+    "src/orders/orderService.ts: tail return of db.orders.find inside async fn",
+    "src/reporting/metricsAggregator.ts: cache logic with correct awaits (contrast file)"
+  ],
+  "totalFiles": 24
+}

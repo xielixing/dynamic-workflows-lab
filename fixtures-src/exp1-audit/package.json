@@ -1,0 +1,12 @@
+{
+  "name": "exp1-audit-fixture",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Static fixture: 24 TS files, 6 planted missing-await bugs. Audit only, do not modify.",
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "^5.5.4"
+  }
+}

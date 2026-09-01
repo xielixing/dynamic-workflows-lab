@@ -1,0 +1,13 @@
+{
+  "exp": "exp1",
+  "arm": "nl",
+  "run": 1,
+  "startedAt": "2026-09-01T12:06:58.602Z",
+  "durationMs": 119602,
+  "exit": 0,
+  "sessionId": "ae6f648e-99fe-4942-9605-3fe6cd1134bc",
+  "result": "Shared/root agent done — 0 findings in those 4 files (its cross-file verification independently confirmed the inventory/orders/notifications bugs). Six agents down, one to go (pricing).",
+  "isError": false,
+  "costUsd": 1.379754,
+  "stderr": ""
+}
