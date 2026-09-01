@@ -2,15 +2,71 @@
   {
     "arm": "nl",
     "run": 1,
-    "sessionId": "ae6f648e-99fe-4942-9605-3fe6cd1134bc",
-    "durationMs": 119602,
+    "sessionId": "1b21190b-45de-4d9c-8f86-c904682779c2",
+    "durationMs": 173523,
+    "exit": 0
+  },
+  {
+    "arm": "nl",
+    "run": 2,
+    "sessionId": "fbb42b60-1c10-4315-afe9-fdfd5330e1f9",
+    "durationMs": 201573,
+    "exit": 0
+  },
+  {
+    "arm": "nl",
+    "run": 3,
+    "sessionId": "a746be7f-7b55-4c7c-aef7-2392c3d13cc1",
+    "durationMs": 150683,
+    "exit": 0
+  },
+  {
+    "arm": "nl",
+    "run": 4,
+    "sessionId": "c538385d-e151-435f-8223-43de61d2b16e",
+    "durationMs": 162817,
+    "exit": 0
+  },
+  {
+    "arm": "nl",
+    "run": 5,
+    "sessionId": "b4d61a1e-71a8-4af0-92aa-0e0ee09de26b",
+    "durationMs": 203698,
     "exit": 0
   },
   {
     "arm": "wf",
     "run": 1,
-    "sessionId": "5a325554-db06-4219-800d-b530751ad68e",
-    "durationMs": 158512,
+    "sessionId": "5dcfcc3d-f088-4faa-875d-86288c91b82f",
+    "durationMs": 174645,
+    "exit": 0
+  },
+  {
+    "arm": "wf",
+    "run": 2,
+    "sessionId": "b2222bcf-e9ec-4291-9bb6-ce94b2fe192b",
+    "durationMs": 169104,
+    "exit": 0
+  },
+  {
+    "arm": "wf",
+    "run": 3,
+    "sessionId": "77770367-a400-4493-bcb2-2ff9d0ea4140",
+    "durationMs": 115403,
+    "exit": 0
+  },
+  {
+    "arm": "wf",
+    "run": 4,
+    "sessionId": "ac8bf5ad-ec8d-46f6-9326-8c37f47fa66e",
+    "durationMs": 249984,
+    "exit": 0
+  },
+  {
+    "arm": "wf",
+    "run": 5,
+    "sessionId": "2f51be73-cd13-4f9a-8e8e-c0777a24f045",
+    "durationMs": 327909,
     "exit": 0
   }
 ]

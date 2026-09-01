@@ -1,0 +1,37 @@
+All six findings are confirmed verbatim. The audit is complete — every one of the 24 `.ts` files under `src/` was covered (read in full, with each reported call verified against the async signature of its called function).
+
+# Audit Report
+
+## Missing `await` on Promise used in boolean context — 6 findings
+
+All six share the same failure mechanism: the helper being called is declared `async` and returns `Promise<boolean>`; the Promise is stored in a const without `await`, then negated. A Promise object is **always truthy**, so `!x` is *never* true → the guard can never fire and the intended branch (throw an error / auto-approve / grant permission / apply discount / skip already-sent / insert reservation) silently never executes.
+
+| # | File:Line | Enclosing function | Offending call expression |
+|---|-----------|-------------------|---------------------------|
+| 1 | `src/orders/fulfillmentService.ts:26` | `fulfillOrder` | `const ok = hasStock(item.sku, item.qty)` → `if (!ok)` (line 27) |
+| 2 | `src/inventory/reservationService.ts:15` | `reserveForOrder` | `const already = hasActiveReservation(orderId)` → `if (!already)` (line 16) |
+| 3 | `src/orders/returnsService.ts:51` | `autoApproveIfEligible` | `const blocked = autoApprovalBlocked(orderId)` → `if (!blocked)` (line 52) |
+| 4 | `src/pricing/promoCodes.ts:16` | `applyPromo` | `const stale = promoIsStale(code)` → `if (!stale)` (line 17) |
+| 5 | `src/users/authService.ts:36` | `assertCanManage` | `const allowed = hasPermission(user, action)` → `if (!allowed)` (line 37) |
+| 6 | `src/notifications/digestBuilder.ts:21` | `buildDigestsFor` | `const sent = hasDigestBeenSent(id)` → `if (!sent)` (line 22) |
+
+Each offending helper is defined in the same file and was confirmed to be `async`/`Promise<boolean>`:
+- `hasStock` → `fulfillmentService.ts:14`; `hasActiveReservation` → `reservationService.ts:4`; `autoApprovalBlocked` → `returnsService.ts:36`; `promoIsStale` → `promoCodes.ts:4`; `hasPermission` → `authService.ts:26`; `hasDigestBeenSent` → `digestBuilder.ts:7`.
+
+## Per-finding impact
+
+1. **`fulfillmentService.ts`** — `OutOfStockError` never throws; shipments are created and stock decremented below zero even when a line item is out of stock (the "phantom shipment" bug WMS-77 in the comment).
+2. **`reservationService.ts`** — a reservation is never inserted; `reserveForOrder` falls through to the "existing reservation" branch, returns `undefined` for new orders (INV-118 idempotency broken in the "never reserved" direction).
+3. **`returnsService.ts`** — the auto-approval branch never executes, so eligible refunds are never auto-approved and every request waits for a human approver (FIN-31).
+4. **`promoCodes.ts`** — discount branch never opens; every promo is treated as stale and `applyPromo` always returns the unchanged total (FIN-27).
+5. **`authService.ts`** — `ForbiddenError` is never thrown; the authorization gate silently grants any user, including `customer`, every action; the grant is even audit-logged (SEC-12).
+6. **`digestBuilder.ts`** — digest-compose branch never runs; every user is treated as already-notified and the `digest.sent` event is never recorded.
+
+## Explicitly checked and cleared (per requirements)
+
+- `void ...` fire-and-forget: e.g. `void db.events.insert(event).catch(...)` in `auditTrail.ts` — correctly excluded.
+- Promises returned from an async function (not boolean-checked): `userService.ts` (`getUser`, `activeCustomers`), `eventsFor` in `auditTrail.ts` — excluded.
+- Synchronous guards that only *look* similar: `smsService.ts:14` `OPT_OUTS.has(userId)` (sync `Set.has`), `stockService.ts` `low.length > 0` (sync array), `profileService.ts`/`userService.ts` `if (!user)` after an already-`await`ed `db.users.find` — all correct, excluded.
+- No `.catch()`/`.then()` chains appeared in a boolean context.
+
+**Files audited: 24/24** (all files under `src/`, including subdirectories). No files were modified — read-only audit.

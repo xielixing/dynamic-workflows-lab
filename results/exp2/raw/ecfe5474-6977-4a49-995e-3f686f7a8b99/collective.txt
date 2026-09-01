@@ -1,0 +1,180 @@
+Confirmed the failure. The root cause is clear.
+
+**Analysis of `src/money.ts`** — `applyDiscountCents` (line 1-4):
+```ts
+return cents - (cents * percentOff) / 100
+```
+It computes the discounted amount but never rounds to whole cents. The spec comment in the file itself says "rounded half-up", and the test `FIN-19` demands integer whole cents:
+- `applyDiscountCents(1999, 15)`: `1999 - 299.85 = 1699.15` → returned as `1699.15`, expected `1699`
+- `applyDiscountCents(333, 50)`: `333 - 166.5 = 166.5` → expected `167` (half-up), would fail too once fixed to plain `Math.trunc` incorrectly — needs `Math.round` (positive values → half-up)
+
+Config has no relevant constant (BATCH_SIZE/MAX_RETRIES/REFUND_* are for other areas), so the fix is local to `src/money.ts`: wrap the expression in `Math.round(...)`.
+
+
+
+=====
+
+Root cause confirmed.
+
+`createRefund` in `src/refunds.ts` (line 7) writes the customer id to a field named `userId`, but `RefundRequest` in `src/types.ts` (line 10) declares the field as `customerId` — so `refund.customerId` is `undefined`. This is also a tsc error, since `userId` is not a declared member of the interface. The `refundSummary` function correctly reads `refund.customerId`, which is why the guard test's `startsWith` check on the refund id passes while the `customerId` assertion fails. Colors the fix: s/customerId: order.customerId, `userId` → `customerId
+
+=====
+
+All checks complete. Summary of verification:
+
+1. **DIFF** — `git diff HEAD -- src/retry.ts` shows exactly one line changed: `return undefined as T` → `throw lastError`. Minimal, matches the claim precisely. File is tracked (modified, not untracked).
+
+2. **TEST INTENT** — The guard test demands: the promise from `withRetry(alwaysFails, 3)` *rejects* with the message `'boom 3'` and that the function was called exactly 3 times. The fixed code captures the last attempt's error in `lastError` and throws it after the loop, so the rejection carries `boom 3`. The second test (eventual success resolves to the value) also passes since the success path returns via `return await fn()`. I verified the test genuinely fails on the base version (via git stash): it fails with exactly the diagnosed symptom — "promise resolved 'undefined' instead of rejecting" — proving this is a real guard, not a vacuous test.
+
+3. **INTEGRITY** — `git status --porcelain -- tests/` and `git diff HEAD -- tests/` are both empty. No assertion weakened (`calls` still `toBe(3)`, message match `/boom 3/` intact).
+
+4. **ADVERSARIAL** — Edge cases reasoned through: attempts=1 rejects with the single error; success on the final attempt resolves via early return (post-loop throw unreachable); error message carries last attempt number ("boom 3"); a legitimate `undefined` success value can never be confused with exhaustion since the success path returns before the loop ends; no production caller imports `withRetry` (only the test), so no caller depended on the old silent-undefined behavior. The only degenerate input is `attempts=0` where `lastError` is `undefined` — pre-existing dead zone, not a regression.
+
+5. **RUN** — `npx vitest run tests/retry.test.ts`: both tests pass; confirmed failing pre-fix, passing post-fix, so the fix is the cause, not a concurrent edit
+
+=====
+
+All verification dimensions pass. Let me summarize my findings:
+
+**1. DIFF verification** — `git diff HEAD -- src/money.ts` shows exactly the claimed one-line change: adding `Math.round(...)` around `cents - (cents * percentOff) / 100`. It is minimal (one expression wrapped, comment untouched) and fixes the root cause. The baseline (`git show HEAD:src/money.ts`) confirms the pre-fix code returned raw floats, and the file's own comment promises "rounded half-up" — the fix directly implements that documented contract. No scope creep; the other modified files (`src/config.ts`, `src/dates.ts`, `src/refunds.ts`, `src/retry.ts`, `src/sorting.ts`) are the other agents' concurrent tasks, not part of this claim.
+
+**2. TEST INTENT** — `tests/money.test.ts` `rounds discounts to whole cents, half-up (FIN-19)` demands `applyDiscountCents(1999, 15) === 1699`, `(1000, 10) === 900`, `(333, 50) === 167`. The first case fails against baseline (returns `1699.15`), 1000@10 is a boundary purity check (900 exactly is still 900), and 333@50 demands rounding up (`166.5 → 167`). The diff delivers all three. Test file byte-identical to HEAD — unchanged, no weakening.
+
+**3. INTEGRITY** — `git status --porcelain tests/` empty, `git diff HEAD -- tests/` empty, both exit 0. No test touched, no assertion loosened.
+
+**4. ADVERSARIAL** — verified with actual execution of both baseline and fixed code: exact-half cases (25@10% → 23, 75@50% → 38) round half-up; 0% → unchanged (1999); 100% → 0; large value (1234567@33 → 827160) correct; 999@13 → 869. Baseline produced fractional values in most cases; fixed code integer in all. Test run: 2 tests, 2 passed, 3ms.
+
+Verdict: CORRECT.
+
+
+
+=====
+
+Root cause confirmed. The defective value is the `BATCH_SIZE` constant in `src/config.ts` — it's `99`, but ORD-88 (and the file's own comment line 5) demands chunks of exactly 100. With 99, 250 ids become `[99, 99, 52]` instead of `[100, 100, 50]`. The loop in `src/batching.ts` is correct and uses the constant properly; the only change needed is the constant value.
+
+
+
+=====
+
+All checks pass. Verdict: CORRECT.
+
+Verification summary:
+1. **DIFF**: `git diff HEAD -- src/dates.ts` shows exactly one line changed — `const m = d.getUTCMonth()` → `const m = d.getUTCMonth() + 1`. Minimal, no other lines/formatting touched. This is the genuine root-cause fix: 0-based month converted to 1-based before padding. `git status --porcelain` confirms other modified files are `src/config.ts`, `src/money.ts`, `src/refunds.ts`, `src/retry.ts`, `src/sorting.ts` — concurrent agents' work; `src/dates.ts` and `tests/` are clean as claimed.
+2. **TEST INTENT**: The test demands 1-based month rendering: `'2026-03-08T12:00:00Z'` → `'2026-03-08'` (would render `'2026-02-08'` before the fix), plus Dec-31 and Jan-01 rollover cases and the `-05` day-padding guard. The `+ 1` change delivers all of these without any test edit.
+3. **INTEGRITY**: `tests/` status empty, `git diff HEAD -- tests/` empty. No test modified, no assertion weakened.
+4. **ADVERSARIAL**: See cases below — all clean.
+5. **TEST RUN**: `npx vitest run tests/dates.test.ts` → 2/2 passed.
+
+
+
+=====
+
+Both tests pass. Submitting the structured result.
+
+
+
+=====
+
+All verification steps complete. Compiling the verdict.
+
+**Verification summary:**
+
+1. **Diff**: `git diff HEAD -- src/config.ts` shows exactly one line changed: `BATCH_SIZE = 99` → `BATCH_SIZE = 100` (line 6). Minimal, no scope creep, and it's the true root cause — `src/batching.ts` (untouched, `git diff` empty) slices and computes overflow purely off the imported `BATCH_SIZE` constant, so the single value was the defect. Baseline confirmed via `git show HEAD:src/config.ts` = 99.
+
+2. **Test intent**: `tests/batching.test.ts` line 8 requires `[100, 100, 50]` for 250 ids and line 9 requires `overflow === 50`. With 99, the code yields `[99, 99, 52]`/overflow 52; with 100 it delivers exactly `[100, 100, 50]`/overflow 50. The passed test run confirms the delivery — test file was not edited.
+
+3. **Integrity**: `git status --porcelain tests/` empty; `git diff HEAD -- tests/` empty. Only src/ files are modified (6 files, one per area). No assertion weakened.
+
+4. **Adversarial cases** (simulated 100-value code): exact multiple 300 → `[100,100,100]`, overflow 0, no empty trailing batch; empty array → 0 batches, overflow 0; 1 id → `[1]`, overflow 1; 199 → `[100,99]`, overflow 99; order preserved and input un-mutated
+
+=====
+
+Confirmed. The root cause is an off-by-one on the month: `getUTCMonth()` returns a 0-based month (March = 2), and `shortDate` never adds 1, so `2026-03-08T12:00:00Z` renders as `2026-02-08`. No config constant involved — first the `dates` area, quick check for stray hardcoding is unnecessary since the defect is the missing `+ 1`. The failing test demands 1-based months.
+
+
+
+=====
+
+All checks complete. My analysis:
+
+**Diff integrity**: `git status --porcelain` shows exactly 6 modified files (`src/config.ts, dates.ts, money.ts, refunds.ts, retry.ts, sorting.ts`), no untracked files. `git diff HEAD -- tests/` is empty — tests are byte-identical to HEAD, no assertions weakened.
+
+**Coverage — each failing test maps to a minimal root-cause fix:**
+- ORD-88 (batching): bug was `BATCH_SIZE = 99` in config; logic already slices by the constant. Fix corrects the constant to spec value 100 (raised, not lowered to game the test). Test expects `[100,100,50]` + overflow 50.
+- OPS-31 (dates): `getUTCMonth()` is 0-based; fix adds `+1`, leaving UTC year/date untouched.
+- FIN-19 (money): wrapped discount in `Math.round`; half-up confirmed by `333*50% → 167`.
+- refunds: baseline emitted `userId:` (a key RefundRequest doesn't declare) instead of `customerId`; one-key rename fixes it, and `refundSummary` already read `customerId`.
+- RET-7 (retry): baseline `return undefined as T` (silent success); fix `throw lastError` after the loop.
+- OPS-12 (sorting): baseline sorted by `id.localeCompare`; fix compares `createdAt` descending — verified against the fixture order (o-1 Aug 1, o-2 Aug 3, o-3 Aug 2 → `['o-2','o-3','o-1']`).
+
+**No constant smuggling**: `BATCH_SIZE = 100` (spec-correct) and `MAX_RETRIES = 3` both live in `src/config.ts`; only the correctly-valued `BATCH_SIZE` is imported, not a test-tailored literal. `retry.ts` uses a default param `attempts = 3` matching MAX_RETRIES, but the test passes `attempts` explicitly, so nothing is gamed.
+
+**Sanity + execution**: `npx tsc --noEmit` exits 0 (strict); `npx vitest run` passes 6 files / 12 tests.
+
+
+
+=====
+
+Confirmed. The bug is in the comparator in `src/sorting.ts`. The `newestFirst` function sorts ascending by `id` (`a.id.localeCompare(b.id)`), which yields `['o-1','o-2','o-3']`. The test demands descending order by `createdAt` (o-2 is 08-03, o-3 is 08-02, o-1 is 08-01). Wrong comparator/field, not a constant — no config involvement.
+
+
+
+=====
+
+All checks pass. Summary of the adversarial verification:
+
+1. **DIFF**: `src/refunds.ts` shows exactly one line changed: `userId: order.customerId,` → `customerId: order.customerId,`. Minimal, no scope creep. Grep confirms no other `userId` reference remains in `src/`.
+
+2. **TEST INTENT**: `tests/refunds.test.ts` line 15 asserts `refund.customerId` is `'c-42'` and line 16 asserts the summary contains `'c-42'`. With the fix, `refund.customerId` = `order.customerId` = `'c-42'`, and `refundSummary` produces `'rf-o-77-2500: $25.00 for customer c-42'`. Both assertions pass; the second test's prefix assertion is orthogonal and also passes.
+
+3. **INTEGRITY**: `git status --porcelain tests/` and `git diff HEAD -- tests/` both empty. Tests untouched, no assertions weakened. The `RefundRequest` interface in `src/types.ts` (verified at HEAD via `git show`) declares `customerId: string` — confirming the root cause: the old literal wrote to an undeclared `userId` (a tsc excess-property error on the object literal) leaving `refund.customerId` undefined.
+
+4. **ADVERSARIAL**: Object literal now has exactly the interface's keys (refundId, customerId, orderId, amountCents, reason) — no undeclared fields, no missing members. Prefix format exact (test passes). Edge cases like `amountCents=0` → `rf-<id>-0: $0.00` unaffected. The fix is a pure field renames; no behavior change to amount/reason/orderId paths.
+
+5. **RUN**: `npx vitest run tests/refunds.test.ts` → 1 file, 2 tests passed.
+
+Other files (`src/config.ts`, `src/dates.ts`, `src/money.ts`, `src/retry.ts`, `src/sorting.ts`) are modified by concurrent agents — out of scope for this area; none of their changes appear in the refunds test output
+
+=====
+
+Both tests pass. The fix is minimal and clean
+
+=====
+
+Both tests pass, including the rejectlint guard (`rejects.toThrow('boom 3')` at 3 calls). The fix is complete
+
+=====
+
+All checks complete. Let me summarize the adversarial findings:
+
+**DIFF**: Exact match to the claim — one line changed in `src/sorting.ts`: comparator swapped from `a.id.localeCompare(b.id)` to `(a.createdAt < b.createdAt ? 1 : -1)`. The `[...orders]` spread copy is preserved. No scope creep (the other modified files — config, dates, money, refunds, retry — are other agents' concurrent edits, out of scope).
+
+**TEST INTENT**: `tests/sorting.test.ts` demands `o-2, o-3, o-1` (descending by createdAt) and the no-mutation guard. Both pass unedited. The failing test's expectation is exactly what the new comparator produces (verified: distinct timestamps → `['o-2','o-3','o-1']`).
+
+**INTEGRITY**: `git status --porcelain tests/` empty, `git diff HEAD -- tests/` empty. Zero assertions weakened.
+
+**ADVERSARIAL**:
+- Equal createdAt ties → deterministic result, elements preserved, no crash; spec comment explicitly says ties are fine (millisecond precision in prod). Not a spec-visible failure.
+- Empty array → `[]`; single element → `[s]` both correct.
+- Input array unmutated → confirmed by both the guard test and manual probe.
+- Descending time order for the mixed tie/dates case → correct.
+
+**TEST RUN**: `npx vitest run tests/sorting.test.ts` → 2 tests passed, 2ms
+
+=====
+
+Confirmed. The failing test resets the loop correctly (`calls === 3`), but the function swallows the retry error: after exhausting all attempts it falls through to `return undefined as T` instead of rejecting, so callers see `undefined` instead of the last error. The guard test passes because the happy path returns inside the loop.
+
+Root cause: at `src/retry.ts:14`, `return undefined as T` should be `throw lastError` — the discarded `lastError` captures the final error (the RET-7 swallowed-retry-error bug). No config constant involved (attempts are passed explicitly; `MAX_RETRIES` is not the issue).
+
+
+
+=====
+
+The fix is applied cleanly and both tests pass.
+
+
+
+=====
+
+Fix applied and verified. Then I report the structured output

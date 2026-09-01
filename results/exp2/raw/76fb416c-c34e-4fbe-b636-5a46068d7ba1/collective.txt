@@ -1,0 +1,321 @@
+Error: Exit code 1
+
+> exp2-fix-fixture@1.0.0 test
+> vitest run
+
+
+[1m[46m RUN [49m[22m [36mv3.2.7 [39m[90mC:/codeagent/dynamic-workflows-lab/fixtures/exp2-fix[39m
+
+ [31m❯[39m tests/dates.test.ts [2m([22m[2m2 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[32m 6[2mms[22m[39m
+[31m   [31m×[31m shortDate[2m > [22mrenders UTC dates with 1-based months (OPS-31)[39m[32m 5[2mms[22m[39m
+[31m     → expected '2026-02-08' to be '2026-03-08' // Object.is equality[39m
+   [32m✓[39m shortDate[2m > [22mpads single digit days[32m 0[2mms[22m[39m
+ [31m❯[39m tests/money.test.ts [2m([22m[2m2 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[32m 6[2mms[22m[39m
+[31m   [31m×[31m money[2m > [22mrounds discounts to whole cents, half-up (FIN-19)[39m[32m 5[2mms[22m[39m
+[31m     → expected 1699.15 to be 1699 // Object.is equality[39m
+   [32m✓[39m money[2m > [22mformats cents as dollars[32m 0[2mms[22m[39m
+ [31m❯[39m tests/refunds.test.ts [2m([22m[2m2 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[32m 5[2mms[22m[39m
+[31m   [31m×[31m refunds[2m > [22mcarries the customer id on the refund request[39m[32m 4[2mms[22m[39m
+[31m     → expected undefined to be 'c-42' // Object.is equality[39m
+   [32m✓[39m refunds[2m > [22msummarizes a refund for the ops log[32m 0[2mms[22m[39m
+ [31m❯[39m tests/retry.test.ts [2m([22m[2m2 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[32m 7[2mms[22m[39m
+[31m   [31m×[31m withRetry[2m > [22mrejects with the last error after exhausting attempts (RET-7)[39m[32m 6[2mms[22m[39m
+[31m     → promise resolved "undefined" instead of rejecting[39m
+   [32m✓[39m withRetry[2m > [22mreturns the value when the call eventually succeeds[32m 1[2mms[22m[39m
+ [31m❯[39m tests/batching.test.ts [2m([22m[2m2 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[32m 9[2mms[22m[39m
+[31m   [31m×[31m batchIds[2m > [22msplits 250 ids into chunks of 100 per ORD-88[39m[32m 8[2mms[22m[39m
+[31m     → expected [ 99, 99, 52 ] to deeply equal [ 100, 100, 50 ][39m
+   [32m✓[39m batchIds[2m > [22mkeeps original order within batches[32m 0[2mms[22m[39m
+ [31m❯[39m tests/sorting.test.ts [2m([22m[2m2 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[32m 15[2mms[22m[39m
+[31m   [31m×[31m newestFirst[2m > [22msorts orders newest first (OPS-12)[39m[32m 14[2mms[22m[39m
+[31m     → expected [ 'o-1', 'o-2', 'o-3' ] to deeply equal [ 'o-2', 'o-3', 'o-1' ][39m
+   [32m✓[39m newestFirst[2m > [22mdoes not mutate the input array[32m 0[2mms[22m[39m
+
+[31m⎯⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 6 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+
+[41m[1m FAIL [22m[49m tests/batching.test.ts[2m > [22mbatchIds[2m > [22msplits 250 ids into chunks of 100 per ORD-88
+[31m[1mAssertionError[22m: expected [ 99, 99, 52 ] to deeply equal [ 100, 100, 50 ][39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[32m-   100,[39m
+[32m-   100,[39m
+[32m-   50,[39m
+[31m+   99,[39m
+[31m+   99,[39m
+[31m+   52,[39m
+[2m  ][22m
+
+[36m [2m❯[22m tests/batching.test.ts:[2m8:49[22m[39m
+    [90m  6| [39m    const ids = Array.from({ length: 250 }, (_, i) => `id-${String(i).…
+    [90m  7| [39m    [35mconst[39m result [33m=[39m [34mbatchIds[39m(ids)
+    [90m  8| [39m    [34mexpect[39m(result[33m.[39mbatches[33m.[39m[34mmap[39m((b) [33m=>[39m b[33m.[39mlength))[33m.[39m[34mtoEqual[39m([[34m100[39m[33m,[39m [34m100[39m[33m,[39m [34m50[39m])
+    [90m   | [39m                                                [31m^[39m
+    [90m  9| [39m    [34mexpect[39m(result[33m.[39moverflow)[33m.[39m[34mtoBe[39m([34m50[39m)
+    [90m 10| [39m  })
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m tests/dates.test.ts[2m > [22mshortDate[2m > [22mrenders UTC dates with 1-based months (OPS-31)
+[31m[1mAssertionError[22m: expected '2026-02-08' to be '2026-03-08' // Object.is equality[39m
+
+Expected: [32m"2026-0[7m3[27m-08"[39m
+Received: [31m"2026-0[7m2[27m-08"[39m
+
+[36m [2m❯[22m tests/dates.test.ts:[2m6:47[22m[39m
+    [90m  4| [39m[34mdescribe[39m([32m'shortDate'[39m[33m,[39m () [33m=>[39m {
+    [90m  5| [39m  [34mit[39m([32m'renders UTC dates with 1-based months (OPS-31)'[39m[33m,[39m () [33m=>[39m {
+    [90m  6| [39m    [34mexpect[39m([34mshortDate[39m([32m'2026-03-08T12:00:00Z'[39m))[33m.[39m[34mtoBe[39m([32m'2026-03-08'[39m)
+    [90m   | [39m                                              [31m^[39m
+    [90m  7| [39m    [34mexpect[39m([34mshortDate[39m([32m'2026-12-31T23:59:59Z'[39m))[33m.[39m[34mtoBe[39m([32m'2026-12-31'[39m)
+    [90m  8| [39m    [34mexpect[39m([34mshortDate[39m([32m'2026-01-01T00:00:00Z'[39m))[33m.[39m[34mtoBe[39m([32m'2026-01-01'[39m)
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m tests/money.test.ts[2m > [22mmoney[2m > [22mrounds discounts to whole cents, half-up (FIN-19)
+[31m[1mAssertionError[22m: expected 1699.15 to be 1699 // Object.is equality[39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 1699[39m
+[31m+ 1699.15[39m
+
+[36m [2m❯[22m tests/money.test.ts:[2m6:42[22m[39m
+    [90m  4| [39m[34mdescribe[39m([32m'money'[39m[33m,[39m () [33m=>[39m {
+    [90m  5| [39m  [34mit[39m([32m'rounds discounts to whole cents, half-up (FIN-19)'[39m[33m,[39m () [33m=>[39m {
+    [90m  6| [39m    [34mexpect[39m([34mapplyDiscountCents[39m([34m1999[39m[33m,[39m [34m15[39m))[33m.[39m[34mtoBe[39m([34m1699[39m)
+    [90m   | [39m                                         [31m^[39m
+    [90m  7| [39m    [34mexpect[39m([34mapplyDiscountCents[39m([34m1000[39m[33m,[39m [34m10[39m))[33m.[39m[34mtoBe[39m([34m900[39m)
+    [90m  8| [39m    [34mexpect[39m([34mapplyDiscountCents[39m([34m333[39m[33m,[39m [34m50[39m))[33m.[39m[34mtoBe[39m([34m167[39m)
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m tests/refunds.test.ts[2m > [22mrefunds[2m > [22mcarries the customer id on the refund request
+[31m[1mAssertionError[22m: expected undefined to be 'c-42' // Object.is equality[39m
+
+[32m- Expected:[39m 
+"c-42"
+
+[31m+ Received:[39m 
+undefined
+
+[36m [2m❯[22m tests/refunds.test.ts:[2m15:31[22m[39m
+    [90m 13| [39m  [34mit[39m([32m'carries the customer id on the refund request'[39m[33m,[39m () [33m=>[39m {
+    [90m 14| [39m    [35mconst[39m refund [33m=[39m [34mcreateRefund[39m([33mORDER[39m[33m,[39m [32m'damaged'[39m[33m,[39m [34m2500[39m)
+    [90m 15| [39m    [34mexpect[39m(refund[33m.[39mcustomerId)[33m.[39m[34mtoBe[39m([32m'c-42'[39m)
+    [90m   | [39m                              [31m^[39m
+    [90m 16| [39m    [34mexpect[39m([34mrefundSummary[39m(refund))[33m.[39m[34mtoContain[39m([32m'c-42'[39m)
+    [90m 17| [39m  })
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m tests/retry.test.ts[2m > [22mwithRetry[2m > [22mrejects with the last error after exhausting attempts (RET-7)
+[31m[1mAssertionError[22m: promise resolved "undefined" instead of rejecting[39m
+
+[32m- Expected:[39m 
+Error {
+  "message": "rejected promise",
+}
+
+[31m+ Received:[39m 
+undefined
+
+[36m [2m❯[22m tests/retry.test.ts:[2m11:43[22m[39m
+    [90m  9| [39m      [35mthrow[39m [35mnew[39m [33mError[39m([32m`boom [39m[36m${[39mcalls[36m}[39m[32m`[39m)
+    [90m 10| [39m    }
+    [90m 11| [39m    [35mawait[39m [34mexpect[39m([34mwithRetry[39m(alwaysFails[33m,[39m [34m3[39m))[33m.[39mrejects[33m.[39m[34mtoThrow[39m([32m'boom 3'[39m)
+    [90m   | [39m                                          [31m^[39m
+    [90m 12| [39m    [34mexpect[39m(calls)[33m.[39m[34mtoBe[39m([34m3[39m)
+    [90m 13| [39m  })
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m tests/sorting.test.ts[2m > [22mnewestFirst[2m > [22msorts orders newest first (OPS-12)
+[31m[1mAssertionError[22m: expected [ 'o-1', 'o-2', 'o-3' ] to deeply equal [ 'o-2', 'o-3', 'o-1' ][39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[31m+   "o-1",[39m
+[2m    "o-2",[22m
+[2m    "o-3",[22m
+[32m-   "o-1",[39m
+[2m  ][22m
+
+[36m [2m❯[22m tests/sorting.test.ts:[2m14:37[22m[39m
+    [90m 12| [39m  [34mit[39m([32m'sorts orders newest first (OPS-12)'[39m[33m,[39m () [33m=>[39m {
+    [90m 13| [39m    [35mconst[39m sorted [33m=[39m [34mnewestFirst[39m([33mORDERS[39m)
+    [90m 14| [39m    [34mexpect[39m(sorted[33m.[39m[34mmap[39m((o) [33m=>[39m o[33m.[39mid))[33m.[39m[34mtoEqual[39m([[32m'o-2'[39m[33m,[39m [32m'o-3'[39m[33m,[39m [32m'o-1'[39m])
+    [90m   | [39m                                    [31m^[39m
+    [90m 15| [39m  })
+    [90m 16| [39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯[22m[39m
+
+
+[2m Test Files [22m [1m[31m6 failed[39m[22m[90m (6)[39m
+[2m      Tests [22m [1m[31m6 failed[39m[22m[2m | [22m[1m[32m6 passed[39m[22m[90m (12)[39m
+[2m   Start at [22m 21:28:23
+[2m   Duration [22m 383ms[2m (transform 245ms, setup 0ms, collect 342ms, tests 49ms, environment 1ms, prepare 656ms)[22m
+
+=====
+
+Done. Both verifications pass.
+
+## (a) Root cause
+
+In `C:\codeagent\dynamic-workflows-lab\fixtures\exp2-fix\src\refunds.ts` **line 7**, `createRefund` constructed the refund object with the key `userId`:
+
+```ts
+userId: order.customerId,
+```
+
+But the `RefundRequest` interface (`C:\codeagent\dynamic-workflows-lab\fixtures\exp2-fix\src\types.ts`, line 10) declares `customerId` — there is no `userId` field. So:
+- TS2353 (`'userId' does not exist in type 'RefundRequest'`) came directly from that line.
+- The object carried `userId` instead of `customerId`, leaving `refund.customerId` `undefined` and failing `expect(refund.customerId).toBe('c-42')`.
+
+`refundSummary` in `src/refunds.ts` **line 15** already used the correct field name (`refund.customerId`), confirming `customerId` is the right key — the mismatch was isolated to `createRefund`.
+
+## (b) Change made
+
+File: `C:\codeagent\dynamic-workflows-lab\fixtures\exp2-fix\src\refunds.ts` (one line)
+
+Before:
+```ts
+userId: order.customerId,
+```
+After:
+```ts
+customerId: order.customerId,
+```
+
+No other files touched — `tests/` untouched, no assertions changed, no signature changes.
+
+## (c) Results
+
+- `npx vitest run tests/refunds.test.ts`: **2 passed** (2 tests), 1 file, exit 0.
+- `npx tsc --noEmit` from repo root: **clean** (no output, no errors).
+
+=====
+
+Done.
+
+**(a) Root cause** — `src/sorting.ts:8`:
+```ts
+return [...orders].sort((a, b) => a.id.localeCompare(b.id))
+```
+The comparator sorted ascending by `id` (alphabetically: `o-1`, `o-2`, `o-3`), completely ignoring `createdAt` despite the OPS-12 intent that the dashboard renders orders newest first. Confirmed numerically against the test fixture: `o-2` = `2026-08-03`, `o-3` = `2026-08-02`, `o-1` = `2026-08-01`, so newest first is `['o-2','o-3','o-1']`.
+
+**(b) Change** — `src/sorting.ts:8`:
+- Before: `return [...orders].sort((a, b) => a.id.localeCompare(b.id))`
+- After: `return [...orders].sort((a, b) => b.createdAt.localeCompare(a.createdAt))`
+
+`b.createdAt.localeCompare(a.createdAt)` gives descending order by `createdAt` (later timestamp = first, i.e. newest first). ISO 8601 UTC strings compare lexicographically in the same order as chronologically, and millisecond precision means ties are effectively a non-issue (the doc comment explicitly allows ties). The spread `[...orders]` is preserved, so the input array is still not mutated.
+
+**(c) Test result** — `npx vitest run tests/sorting.test.ts` from the repo root: 1 test file, 2/2 tests passed (`sorts orders newest first (OPS-12)` and `does not mutate the input array`). No changes to `tests/`, no assertions weakened, no signature/API changed.
+
+=====
+
+Fixed.
+
+**(a) Root cause** — In `src/dates.ts`, line 7, `getUTCMonth()` is zero-based while the spec OPS-31 requires 1-based months in the output:
+
+```ts
+const m = d.getUTCMonth()   // line 7 (before)
+```
+
+Since `getUTCMonth()` returns 0 for January through 11 for December, March (`2026-03-08`) produced `m = 2` and was rendered as `2026-02-08`.
+
+**(b) Change** — Single-line fix in `src/dates.ts` (before → after):
+
+```ts
+const m = d.getUTCMonth()          // before
+const m = d.getUTCMonth() + 1      // after
+```
+
+Lines 8-9 already correctly zero-pad both month and day with `String(...).padStart(2, '0')` and the year/timestamp handling is unchanged. No API or signature changes, no test modifications.
+
+**(c) Test result** — `npx vitest run tests/dates.test.ts` from repo root passes: both tests pass (2/2), render `2026-03-08`, `2026-12-31`, `2026-01-01`, and the single-digit day padding check.
+
+=====
+
+All tests pass. Report:
+
+**(a) Root cause**
+
+`C:\codeagent\dynamic-workflows-lab\fixtures\exp2-fix\src\money.ts` line 3:
+```ts
+return cents - (cents * percentOff) / 100
+```
+It returned the raw fractional result with no rounding. For `applyDiscountCents(1999, 15)`: `1999 - (1999 * 15) / 100` = `1999 - 299.85` = `1699.15`, which is not a valid whole-cents money value and failed `toBe(1699)`. The spec comment on line 2 states results must be whole cents, rounded half-up.
+
+**(b) Change**
+
+Before:
+```ts
+return cents - (cents * percentOff) / 100
+```
+After:
+```ts
+return Math.round(cents - (cents * percentOff) / 100)
+```
+
+`Math.round` is the correct choice for half-up here: for positive numbers it rounds .5 toward +Infinity, so `Math.round(166.5) = 167`, which satisfies the `applyDiscountCents(333, 50) → 167` assertion. `formatCents` and `addCents` were untouched.
+
+**(c) Test result**
+
+`npx vitest run tests/money.test.ts` from the repo root: `1 passed` test file, `2 passed` tests (the FIN-19 discount test with all three cases and the formatting test). No assertions or test files were modified.
+
+=====
+
+Done. All 2 tests in `tests/batching.test.ts` pass.
+
+**(a) Root cause** — The slicing loop in `src/batching.ts` is correct (it generically chunks by `BATCH_SIZE` and preserves order). The wrong value was the config constant it reads: `src/config.ts` line 6 declared `BATCH_SIZE = 99`, but spec ORD-88 (and the test) require chunks of exactly 100. With `99`, 250 ids split as 99+99+52, hence the observed `[99, 99, 52]`. Per `src/config.ts`'s own rule that it is the single source of truth ("do not hardcode them at call sites"), the fix belongs in the config, not in `batching.ts`.
+
+**(b) Change** — one line in `C:\codeagent\dynamic-workflows-lab\fixtures\exp2-fix\src\config.ts`:
+- Before: `export const BATCH_SIZE = 99`
+- After: `export const BATCH_SIZE = 100`
+
+**(c) Test result** — `npx vitest run tests/batching.test.ts` → 1 test file passed, 2 tests passed (`splits 250 ids into chunks of 100 per ORD-88` and `keeps original order within batches`). No assertions weakened, no changes to `tests/`.
+
+No other files under `src/` reference `BATCH_SIZE` need modification.
+
+=====
+
+Done. Both verifications pass.
+
+**(a) Root cause** — `src/retry.ts`, line 14:
+
+```ts
+return undefined as T
+```
+
+When all attempts fail, the function falls through the loop and returns `undefined` (with a type assertion to shut up the compiler). The promise therefore *resolves* with `undefined` instead of *rejecting* with the caught `lastError` — which the catch block on line 11 already tracked for exactly this purpose. Silent resolution is what made the RET-7 production incident (payments vanishing without a trace).
+
+**(b) Change** — minimal and idiomatic, `src/retry.ts`:
+
+Before:
+```ts
+  }
+  return undefined as T
+}
+```
+
+After:
+```ts
+  }
+  throw lastError
+}
+```
+
+The `throw` surfaces the last error after exhausting attempts, keeps the generic `Promise<T>` return type sound (the loop's only other exit is `return await fn()`), and removes the unsafe `as T` cast.
+
+**(c) Verification**:
+- `npx vitest run tests/retry.test.ts` — 2/2 tests pass (RET-7 rejection with `'boom 3'`, call count 3; eventual-success case still resolves `'ok'`).
+- `npx tsc --noEmit` — clean, no output.
+
+No test files were touched; assertions unchanged. File changed: `C:\codeagent\dynamic-workflows-lab\fixtures\exp2-fix\src\retry.ts`.

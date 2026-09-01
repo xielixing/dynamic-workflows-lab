@@ -1,0 +1,215 @@
+Both sanity checks pass: `npx vitest run tests/batching.test.ts` = 2/2 tests passed, and `npx tsc --noEmit` exits with code 0 (clean — the previously noted unrelated src/refunds.ts error did not surface, and nothing in src/batching.ts was touched).
+
+
+
+=====
+
+Diagnosis complete. The failure output and source confirm the issue.
+
+**Failure:** `promise resolved "undefined" instead of rejecting` on test line 11 (RET-7). The success-path test passes.
+
+**src/retry.ts** — the retry loop correctly captures `lastError` but, after exhausting all attempts, line 14 does `return undefined as T` instead of throwing `lastError`. The file's own header comment documents the intent ("must surface the last error after exhausting attempts"), so the bug is that the error is swallowed and `undefined` is returned.
+
+**tsc:** the only error is in `src/refunds.ts` (unrelated to this file); `src/retry.ts` has no type errors.
+
+
+
+=====
+
+Both checks pass: the refunds test suite (2 tests) passes and `tsc --noEmit` exits cleanly with no type errors.
+
+The fix in `C:\codeagent\dynamic-workflows-lab\fixtures\exp2-fix\src\refunds.ts` (line 7) changed the object property key from `userId` to `customerId` so it matches the declared `RefundRequest` type:
+- Before: `userId: order.customerId,`
+- After: `customerId: order.customerId,`
+
+This clears both the runtime undefined `customerId` (the refund object now carries `'c-42'` through, and `refundSummary` includes it in the ops-log line) and the tsc TS2353 mismatched-key error. No changes were made to tests or `refundSummary`.
+
+
+
+=====
+
+The failing test is in `tests/money.test.ts` importing from `src/money.ts`. The `tsc --noEmit` error is in `src/refunds.ts` (unrelated to `src/money.ts` — no type error in money.ts itself).
+
+Diagnosis complete. The root cause is that `applyDiscountCents` at line 3 of `src/money.ts` returns the raw fractional discount (`1699.15` for 1999 with 15% off) instead of rounding to whole cents half-up as spec FIN-19 requires (the `333`/`50%` case, `166.5` → `167`, only passes if rounded).
+
+
+
+=====
+
+Both checks pass: vitest (2/2 tests) and tsc --noEmit (exit 0).
+
+
+
+=====
+
+Both checks passed. All 6 test files and 12 tests passed, and the TypeScript typecheck exited cleanly.
+
+
+
+=====
+
+All verification checks done. Let me confirm my analysis of the test math:
+
+- `applyDiscountCents(1999, 15)` = 1999 − 299.85 = 1699.15 → was returned unrounded (would fail the prior `toBe(1699)`), now rounds to 1699
+- `applyDiscountCents(333, 50)` = 166.5 → `Math.round` gives 167 (half-up), previously returned 166.5 (would fail `toBe(167)`)
+- `applyDiscountCents(1000, 10)` = 900 exactly, unaffected
+
+So the test genuinely failed before the change and the one-line fix addresses it.
+
+
+
+=====
+
+All evidence gathered. Let me summarize my adversarial verification:
+
+**Test intent (tests/sorting.test.ts):**
+- Test 1: `newestFirst(ORDERS)` must return ids in order `['o-2', 'o-3', 'o-1']` — o-2 has createdAt `2026-08-03`, o-3 `2026-08-02`, o-1 `2026-08-01`. So "newest first" = descending createdAt.
+- Test 2: input array must not be mutated (sibling test — must stay green).
+
+**The diff (src/sorting.ts):**
+- Baseline: `return [...orders].sort((a, b) => a.id.localeCompare(b.id))` — sorted by order id ascending, which contradicts both the function name `newestFirst` and its doc comment ("renders orders newest first").
+- Fixed: `return [...orders].sort((a, b) => b.createdAt.localeCompare(a.createdAt))` — descending by createdAt.
+
+**Attack checks:**
+- _Root cause vs symptom patch:_ This is a genuine root-cause fix. The old comparator sorted on the wrong key (id ascending); the fix sorts on the semantically correct key (createdAt descending), matching the function's documented intent. No hardcoding, no special-casing of `ORDERS` — it generalizes to any orders with ISO-8601 `createdAt`.
+- _Sibling test:_ Test 2 still passes — `[...orders]` spread retained, so the input array is never mutated.
+- _Scope:_ The `sorting.ts` change touches only sorting.ts; `git status --porcelain tests/` is empty (no test files touched). The other modified files (config.ts, dates.ts, money.ts, refunds.ts, retry.ts) are the sibling planted-bug fixes in this same exp2-fix fixture and are outside the scope of this claim.
+- _Minimal/idiomatic:_ One-line comparator change, idiomatic descending sort with non-mutating copy. Not a symptom patch, no assertion weakening.
+- _Typecheck:_ `npx tsc --noEmit` exits 0.
+
+**Runs:** `npx vitest run tests/sorting.test.ts` → 2 tests passed; `npx tsc --noEmit` → clean.
+
+I could not refute the fix. It correctly addresses the root cause
+
+=====
+
+All adversarial checks pass. The claimed fix is genuine.
+
+Root cause: `createRefund` in `src/refunds.ts` built its `RefundRequest` literal with the key `userId: order.customerId`, but the `RefundRequest` interface (in `src/types.ts`) declares `customerId`, not `userId`. This caused both the tsc TS2353 type error and the runtime failure — `refund.customerId` was `undefined`, so `expect(refund.customerId).toBe('c-42')` failed and `refundSummary` would render "customer undefined".
+
+The applied fix renames the object-literal key to `customerId: order.customerId`. It addresses the actual defect (misnamed property key, so the value was never reaching the field the interface and tests agree on) rather than patching the assertion. No hardcoding or special-casing; the same fix also makes the sibling summary test's `toContain('c-42')` assertion pass. Nothing under `tests/` was modified, and the refunds diff is a single-line key rename elsewhere in the fixture (config/dates/money/retry/sorting edits are separate planted-bug fixes).
+
+Verified: `npx vitest run tests/refunds.test.ts` → 2/2 pass; `npx tsc --noEmit` → exit 0; `git diff --name-only -- tests/` → empty; grep confirms `userId` no longer exists anywhere in src/ and no code depends on it.
+
+
+
+=====
+
+Diagnosis complete. The failure is unambiguous.
+
+**Test output:** `expected undefined to be 'c-42'` at tests/refunds.test.ts:15 — `refund.customerId` is `undefined`.
+
+**Root cause:** In `src/refunds.ts`, `createRefund` returns an object with the wrong property name:
+```ts
+userId: order.customerId,   // line 7 — 'userId' is not a RefundRequest field
+```
+The `RefundRequest` interface in `src/types.ts` declares `customerId: string`, not `userId`. So the returned object never gets a `customerId` field, and both the test assertion (`refund.customerId`) and `refundSummary` (`refund.customerId` in the template string) see `undefined`. The incorrect key also silently violates the type — but because the code flows through `return { ... }` it compiles at runtime without error, and TypeScript catches it at `npx tsc --noEmit`:
+
+```
+src/refunds.ts(7,5): error TS2353: Object literal may only specify known properties, and 'userId' does not exist in type 'RefundRequest'.
+```
+
+This is the only error `tsc` reports. The second test passes; `refundSummary` itself is correct (uses `refund.customerId`, which becomes valid once the field exists).
+
+
+
+=====
+
+Diagnosis complete. The test failure, the src bug, and the tsc report are all consistent.
+
+- Test failure at `tests/sorting.test.ts:14`: expected `['o-2', 'o-3', 'o-1']`, got `['o-1', 'o-2', 'o-3']`.
+- `C:\codeagent\dynamic-workflows-lab\fixtures\exp2-fix\src\sorting.ts` line 8 sorts with `a.id.localeCompare(b.id)` — by order **id**, not by creation time, and ascending.
+- The orders in the fixture: `o-1` = 2026-08-01, `o-2` = 2026-08-03 (newest), `o-3` = 2026-08-02. Newest-first must be o-2, o-3, o-1.
+- `npx tsc --noEmit` reports one error, `src/refunds.ts(7,5)`, unrelated to this test (property `userId` not in `RefundRequest`); no type errors involve `src/sorting.ts`.
+
+Note: `export function newestFirst` uses `[...orders]` already (non-mutating copy), which is why the second test ("does not mutate the input array") passes
+
+=====
+
+All verifications complete. I could not refute the fix.
+
+Analysis summary:
+- **Test intent**: `shortDate` must render UTC dates as `YYYY-MM-DD` with 1-based months (OPS-31). `2026-03-08T12:00:00Z` → `'2026-03-08'`, `2026-12-31` → `'2026-12-31'`, `2026-01-01` → `'2026-01-01'`; day padding checked separately.
+- **Baseline bug**: `d.getUTCMonth()` is 0-based per ECMAScript (March = 2 → `'2026-02-08'`), so the baseline failed the first test. The one-line `+ 1` is the canonical root-cause fix; `padStart(2, '0')` correctly renders '01'…'12'.
+- **Not a symptom patch**: `+1` generalizes to any input, not just the test's three dates; no hardcoding. Single-line, idiomatic.
+- **No collateral changes**: `git diff --name-only -- tests/` is empty; nothing under `tests/` or outside `src/` was touched by this claim. The other 5 modified `src/*.ts` files are separate planted-bug fixes (batching/money/refunds/retry/sorting), unrelated to dates.
+- **Tests**: `npx vitest run tests/dates.test.ts` → 2/2 pass; full suite `npx vitest run` → 12/12 pass (sibling date test `-05` padding still green).
+- **Typecheck**: `npx tsc --noEmit` exits clean
+
+=====
+
+I was unable to refute the fix. Here is my verification summary:
+
+**Test intent (tests/retry.test.ts):** RET-7 asserts that `withRetry` rejects with the last error after exhausting all attempts (`throw new Error('boom 3')` on the 3rd and final call), and that the success path still resolves. The old code `return undefined as T` was a type-unsafe lie that made the function resolve to `undefined` instead of rejecting — the failing test pinned this.
+
+**The change (src/retry.ts:14):** `return undefined as T` → `throw lastError ?? new Error('Retry failed')`. This directly addresses the root cause: `lastError` is already accumulated in the catch block, and after the loop exhausts, the function now re-throws it. The success path (`return await fn()` inside try) is untouched. The `?? new Error(...)` fallback only guards the impossible `attempts <= 0` case.
+
+**Refutation attempts failed:**
+- Not a symptom patch / no hardcoding — it throws the actual `lastError` variable, no special-casing of 'boom 3'.
+- Sibling test still passes — flaky-success path returns 'ok' (2/2 tests green).
+- `calls === 3` still holds — the throw happens after the full loop, no early exit.
+- No changes under `tests/` (git status for tests/ is empty).
+- Diff is one line, minimal and idiomatic. (Note: other `src/*.ts` files also show pre-existing one-line diffs — those are the fixture's other planted bugs fixed by sibling agents, unrelated to this claim.)
+- `npx tsc --noEmit` exits clean.
+
+
+
+=====
+
+Both checks pass: vitest 2/2 tests green, tsc --noEmit clean. The fix is minimal and targets the root cause.
+
+File changed: `C:\codeagent\dynamic-workflows-lab\fixtures\exp2-fix\src\money.ts`
+
+Change made: On line 3, wrapped the computed discounted value in `Math.round`, changing `return cents - (cents * percentOff) / 100` to `return Math.round(cents - (cents * percentOff) / 100)`. `Math.round` rounds half up for positive values (all inputs are positive), so 1999/15 -> 1699.15 -> 1699, 1000/10 -> 900, and 333/50 -> 166.5 -> 167, satisfying FIN-19. No other files touched; tests unchanged and unweakened.
+
+Verification: `npx vitest run tests/money.test.ts` (2 passed), `npx tsc --noEmit` (no errors).
+
+
+
+=====
+
+Diagnosis complete
+
+=====
+
+All checks complete. Let me verify my analysis:
+
+**Test intent:** Test 1 asserts 250 ids chunk into `[100, 100, 50]` with overflow 50 — matching the ORD-88 comment in config.ts ("chunks of exactly 100 ids"). Test 2 asserts order preservation (10 ids fit in one batch).
+
+**The change:** `BATCH_SIZE` 99 → 100, a one-character diff in the config that is the declared "single source of truth." The chunking loop in `src/batching.ts` was already correct (`i += BATCH_SIZE`, `slice(i, i+BATCH_SIZE)`, `overflow: ids.length % BATCH_SIZE`); it had no bugs.
+
+**Attack results:**
+- **Root cause?** Yes. The defect was the config constant itself disagreeing with the file's own spec comment and the ORD-88 agreement on 100 ids. The fix corrects the source of truth rather than special-casing test inputs. With 99, 250 ids yielded `[99, 99, 52]`/52, failing the test; with 100 it yields `[100, 100, 50]`/50. batching.ts needed no changes, and none were made.
+- **Sibling test broken?** No — test 2 (10 ids) passes; 2/2 green (vitest exit 0).
+- **Tests/ touched?** `git diff --stat -- tests/` is empty. No test was modified or weakened. The 5 other modified src/ files (dates.ts = month off-by-one, money.ts = rounding, refunds.ts = wrong field name, retry.ts = returns undefined instead of throwing, sorting.ts = sorts by id not createdAt) are the fixture's other planted bugs, each a matching one-line fix; none relate to this change.
+- **Minimal/idiomatic?** Yes — one-character change consistent with the spec comment and the config's own design contract.
+- **tsc:** exit 0.
+
+Nothing to refute: the fix is a genuine root-cause correction of the config value, tests pass, typecheck is clean, and no assertions were weakened.
+
+
+
+=====
+
+Test suite passes (2 tests) and `npx tsc --noEmit` completes cleanly.
+
+
+
+=====
+
+All diagnostic steps complete. The failure is clear and no type errors involve `src/batching.ts` (the only `tsc` error is an unrelated `userId` property issue in `src/refunds.ts`).
+
+Root cause trace:
+- `tests/batching.test.ts` builds 250 ids and expects `batchIds` to produce chunks `[100, 100, 50]` with `overflow === 50`.
+- Actual result is `[99, 99, 52]` — exactly what you get with `BATCH_SIZE = 99`: `250 = 99 + 99 + 52`, and `250 % 99 = 52`.
+- `src/batching.ts` implements the chunking loop correctly off the imported `BATCH_SIZE` constant (`src/config.ts:6`), but the constant is planted wrong. `src/config.ts`'s own comment says "ORD-88: orders are dispatched in chunks of exactly 100 ids" — the constant contradicts the stated spec and the test. The memo in memory (`exp2-fix fixture fixed` — 6 planted bugs in src/) corroborates this is one of the planted bugs.
+
+Fix approach: in `src/config.ts`, change `export const BATCH_SIZE = 99` to `export const BATCH_SIZE = 100`; the loop in `src/batching.ts` then yields `[100, 100, 50]` and `overflow = 250 % 100 = 50`. No test or `src/batching.ts` change needed.
+
+Test intent: per ORD-88, `batchIds` must split N ids into batches of exactly 100 (as specified in `src/config.ts`), leaving the remainder as the trailing/overflow count while preserving original order.
+
+
+
+=====
+
+Now sanity-check with the test run and type check

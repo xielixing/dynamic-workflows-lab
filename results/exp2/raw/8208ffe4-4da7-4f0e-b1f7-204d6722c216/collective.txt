@@ -1,0 +1,87 @@
+The diagnosis checks out. The computed values are:
+- `applyDiscountCents(1999, 15)` → 1999 − 299.85 = 1699.15 → needs rounding to 1699
+- `applyDiscountCents(1000, 10)` → 900 (exact)
+- `applyDiscountCents(333, 50)` → 333 − 166.5 = 166.5 → Math.round half-up gives 167
+
+`Math.round` in JS rounds half up toward +∞ for positive values, which is exactly what's needed here, and `formatCents` is untouched
+
+=====
+
+The diagnosis matches the code. Let me check the test intent.
+
+
+
+=====
+
+Confirmed. The test failure is exactly as diagnosed:
+
+- `applyDiscountCents(1999, 15)` returns `1699.15` (raw `1999 - 299.85`), expected `1699`
+- `applyDiscountCents(333, 50)` returns `166.5` (raw `333 - 166.5`), expected `167` (the half-up case)
+
+The function at `C:\codeagent\dynamic-workflows-lab\fixtures\exp2-fix\src\money.ts` line 3 computes the discounted value but never rounds to whole cents, despite the FIN-19 spec on line 2 stating "results are money in whole cents, rounded half-up."
+
+
+
+=====
+
+The task says to report edits, not apply them — but it also requires verifying the fix passes the test. I'll temporarily apply the fix, run the test, then revert the file so the repo stays untouched
+
+=====
+
+- `C:\codeagent\dynamic-workflows-lab\fixtures\exp2-fix\src\batching.ts` — loop logic is correct: iterates by `BATCH_SIZE` and slices `ids.slice(i, i + BATCH_SIZE)`; computes `overflow: ids.length % BATCH_SIZE`. Nothing to change here.
+- `C:\codeagent\dynamic-workflows-lab\fixtures\exp2-fix\tests\batching.test.ts` — pins `BATCH_SIZE === 100`: 250 ids → `[100, 100, 50]`, `overflow === 50`; and 10 ids → a single batch, order preserved.
+- `C:\codeagent\dynamic-workflows-lab\fixtures\exp2-fix\src\config.ts` — the bug: `export const BATCH_SIZE = 99`, while its own comment and the ORD-88 spec (and the test) require `100`. With 99, 250 ids produce `[99, 99, 52]` with `overflow 52`, so the test fails.
+
+Everything else is consistent: `types.ts` `BatchResult` matches the implementation
+
+=====
+
+Confirmed empirically. The module imports only `./types` (no config dependency); the failure is exactly as suspected: `[ 'o-1', 'o-2', 'o-3' ]` produced vs. `[ 'o-2', 'o-3', 'o-1' ]` expected.
+
+Root cause is clear from `C:\codeagent\dynamic-workflows-lab\fixtures\exp2-fix\src\sorting.ts`, line 8.
+
+
+
+=====
+
+The diagnosis is confirmed: `src/config.ts` line 6 exports `BATCH_SIZE = 99`, while the ORD-88 spec comment (lines 4-5) and the failing test `tests/batching.test.ts` both require 100 (250 ids must chunk to `[100, 100, 50]` with overflow 50). `src/batching.ts` correctly reads `BATCH_SIZE` from config and chunks via `ids.slice(i, i + BATCH_SIZE)`, so fixing the constant to 100 propagates correct chunk sizes without touching `batching.ts`.
+
+I will not apply the edit myself — the orchestrator asked me to report it. Here is the exact edit:
+
+- **File:** `C:\codeagent\dynamic-workflows-lab\fixtures\exp2-fix\src\config.ts`
+- **oldText:** `export const BATCH_SIZE = 99` (line 6)
+- **newText:** `export const BATCH_SIZE = 100`
+
+No other files need changes. With 250 ids, the loop yields batches `[[0..99], [100..199], [200..249]]` → `[100, 100, 50]` and `overflow = 250 % 100 = 50`, which passes the failing test. The `'a'..'j'` single-batch test (10 <= 100) also still passes. `src/config.ts` introduces no tsc errors (simple const value change
+
+=====
+
+The bug is confirmed. `shortDate('2026-03-08T12:00:00Z')` returns `'2026-02-08'` because line 7 reads `getUTCMonth()` directly, which is zero-based (2 for March), while the spec and test require 1-based months (3).
+
+Trace: for `2026-03-08T12:00:00Z`, `getUTCFullYear()` → 2026 (correct), `getUTCMonth()` → 2 (should be 3), `getUTCDate()` → 8 (correct, and padding works). The "off-by-one wrapping" lead checks out: adding 1 to `getUTCMonth()` produces exactly the right 1–12 range for every month (January 0→1, December 11→12), with no overflow risk since the month is only formatted as a string, never used to construct a Date.
+
+Module is self-contained — `src/dates.ts` imports nothing, and `src/types.ts` / `src/config.ts` are unrelated to date rendering
+
+=====
+
+Root cause confirmed by reading the code. Line 7 of `src/refunds.ts` builds the object literal with `userId: order.customerId`, but the `RefundRequest` interface in `src/types.ts` declares the property as `customerId`. The object therefore has a `userId` key, `refund.customerId` is `undefined`, `refundSummary` interpolates `undefined`, and TS emits TS2353 at (7,5). The template string in `refundSummary` is already correct
+
+=====
+
+I have everything I need. The bug is isolated and clear.
+
+**Root cause analysis**
+
+In `src/retry.ts`, the retry loop captures each failure into `lastError`, but after the loop falls through (all `attempts` made, every call threw), line 14 returns `undefined as T` instead of surfacing `lastError`. For the failing test, `withRetry(alwaysFails, 3)` makes 3 calls (test asserts `calls` is 3), each throwing `boom 1/2/3`. The final iteration's catch stores `boom 3` in `lastError`, the loop exits, and the function `return undefined` — so the promise **resolves** with `undefined` rather than **rejecting**. The test's `rejects.toThrow('boom 3')` then fails because the promise never rejects (and `values`/`expect` sees a resolved `undefined`).
+
+The note from other sessions is correct and exactly matches this: the loop accumulates `lastError` in the catch (it's already doing that correctly), but the exit path discards it.
+
+**Behavioral intent the tests pin down**
+
+1. The retry loop must attempt `fn` exactly `attempts` times when it keeps failing (`calls` == 3), retrying on every caught error — no early bail on the first error.
+2. When a call eventually succeeds after transient failures, it must resolve with that value (`flaky` fails once, then `resolves.toBe('ok')`).
+3. After exhausting all attempts, it must **reject with the error from the last (final) attempt** — `boom 3`, not `boom 1` and not a generic wrapper.
+
+**Minimal fix**
+
+In `C:\codeagent\dynamic-workflows-lab\fixtures\exp2-fix\src\retry.ts` line 14, replace `return undefined as T` with `throw lastError`. Inside an async function this produces a rejected promise carrying the final attempt's error, exactly satisfying the RET-7 test while leaving the success-path (line 9 `return await fn()`) untouched. No other lines or signatures change; `lastError` is guaranteed set whenever the loop exits normally since every iteration either returns or assigns `lastError

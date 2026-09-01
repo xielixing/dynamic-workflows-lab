@@ -1,0 +1,164 @@
+Done.
+
+**Root cause:** `Date.prototype.getUTCMonth()` returns a 0-based month (Jan = 0, Dec = 11), but spec OPS-31 requires 1-based months rendered as `YYYY-MM-DD`. The code was formatting the raw 0-based value, so every month was rendered one behind — e.g. March 8 produced `2026-02-08`.
+
+**Change made** in `C:\codeagent\dynamic-workflows-lab\fixtures\exp2-fix\src\dates.ts` (single line):
+
+```ts
+// before:
+const m = d.getUTCMonth()
+// after:
+const m = d.getUTCMonth() + 1
+```
+
+No other files touched; tests/ unchanged.
+
+**Verification output** (`npx vitest run tests/dates.test.ts`):
+
+```
+✓ tests/dates.test.ts (2 tests) 2ms
+
+ Test Files  1 passed (1)
+      Tests  2 passed (2)
+```
+
+Both tests pass — the `OPS-31` 1-based month assertion and the `pads single digit days` guard.
+
+=====
+
+Both tests pass. Here's the report.
+
+## Root Cause
+
+`newestFirst` in `C:\codeagent\dynamic-workflows-lab\fixtures\exp2-fix\src\sorting.ts` sorted by `id` ascending instead of by `createdAt` descending:
+
+```ts
+return [...orders].sort((a, b) => a.id.localeCompare(b.id))
+```
+
+The OPS-12 requirement is "orders newest first", and `createdAt` is an ISO-8601 UTC string. In the test data, `o-2` (2026-08-03) is newest, then `o-3` (2026-08-02), then `o-1` (2026-08-01) — so the expected order is `['o-2', 'o-3', 'o-1']`, but the id-based sort returned `['o-1', 'o-2', 'o-3']`. Confirmed by the failing run showing `expected [ 'o-1', 'o-2', 'o-3' ] to deeply equal [ 'o-2', 'o-3', 'o-1' ]`.
+
+## Fix
+
+In `src/sorting.ts`, changed line 8 so the comparator operates on `createdAt` descending. ISO-8601 UTC strings compare correctly via `Date.parse` (or lexicographic string comparison), so no `localeCompare`/toLocaleDateString needed:
+
+```ts
+return [...orders].sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt))
+```
+
+The `[...orders]` spread is preserved, so the guard test `does not mutate the input array` still passes.
+
+## Verification
+
+`npx vitest run tests/sorting.test.ts` output:
+
+```
+✓ tests/sorting.test.ts (2 tests) 2ms
+ Test Files  1 passed (1)
+      Tests  2 passed (2)
+```
+
+Both tests pass — `sorts orders newest first (OPS-12)` and `does not mutate the input array`. Only `src/sorting.ts` was modified; nothing under `tests/` was touched and no assertions were weakened.
+
+=====
+
+Both tests pass. Task complete.
+
+**Root cause**
+
+In `C:\codeagent\dynamic-workflows-lab\fixtures\exp2-fix\src\retry.ts`, when every attempt threw, the loop caught each error into `lastError`, then fell through to the final `return undefined as T`. This resolved the promise to `undefined` instead of rejecting with `lastError` — silently swallowing the final error, exactly the failure mode the file's own comment warns about (the 2026-06-19 incident). The `as T` cast masked the wrong behavior from the type checker.
+
+**Fix made**
+
+Changed the loop's fall-through path from `return undefined as T` to `throw lastError` (single line in `src/retry.ts` only):
+
+```ts
+} else {
+  throw lastError
+}
+```
+
+Concretely:
+```ts
+-      return undefined as T
++      throw lastError
+```
+
+This surfaces the last captured error to the caller. The retry loop (`for i < attempts`, returning `await fn()` on success) is unchanged and not weakened.
+
+**Verification**
+
+After the fix, `npx vitest run tests/retry.test.ts` reports:
+
+```
+✓ tests/retry.test.ts (2 tests) 3ms
+Test Files  1 passed (1)
+Tests       2 passed (2)
+```
+
+Both tests pass: `rejects with the last error after exhausting attempts (RET-7)` and the guard test `returns the value when the call eventually succeeds`.
+
+=====
+
+Both tests pass. Done.
+
+**Root cause:** `applyDiscountCents` in `C:\codeagent\dynamic-workflows-lab\fixtures\exp2-fix\src\money.ts` computed the discount but never rounded to whole cents. For `(1999, 15)` it returned `1699.15` (`1999 - 299.85`); similar fractional results on the other cases. The `(333, 50)` expectation (`167`) also pins down that rounding must apply to the *final result*, not the discount (`Math.round(333 - 166.5) = 167`, whereas rounding the discount first would give `166`).
+
+**Change made** (minimal, in `src/money.ts` only):
+```ts
+// Spec FIN-19: results are money in whole cents, rounded half-up.
+return Math.round(cents - (cents * percentOff) / 100)
+```
+
+`Math.round` is the idiomatic JS half-up rounding and satisfies all three cases.
+
+**Verification output:**
+```
+✓ tests/money.test.ts (2 tests) 2ms
+
+Test Files  1 passed (1)
+     Tests  2 passed (2)
+```
+
+The guard test `formats cents as dollars` still passes (2/2). No files under `tests/` were touched and no assertions were weakened.
+
+=====
+
+Both tests pass. Done.
+
+**Root cause:** `BATCH_SIZE` in `src/config.ts` was set to `99`, which conflicts with the documented spec ORD-88 ("orders are dispatched in chunks of exactly 100 ids") and the test expectations (`[100, 100, 50]`, overflow `50`). The `batchIds` function itself was correct — it iterates and slices by `BATCH_SIZE`, so with the wrong constant, 250 ids were split as `[99, 99, 52]`. The comment on the constant already documented the intended value of 100, making `99` a stale/config-value bug introduced at the call-site constant rather than in the batching logic.
+
+**Fix:** One line in `C:\codeagent\dynamic-workflows-lab\fixtures\exp2-fix\src\config.ts`:
+```ts
+// before
+export const BATCH_SIZE = 99
+// after
+export const BATCH_SIZE = 100
+```
+No changes to `src/batching.ts` (it already slices by the configured constant) and no changes under `tests/`.
+
+**Verification output:**
+```
+npx vitest run tests/batching.test.ts
+ ✓ tests/batching.test.ts (2 tests) 2ms
+ Test Files  1 passed (1)
+      Tests  2 passed (2)
+```
+The guard test `keeps original order within batches` still passes.
+
+=====
+
+Both verification steps pass. Report:
+
+**Root cause:** In `src/refunds.ts`, `createRefund` constructed the `RefundRequest` object with the property `userId: order.customerId`, but `RefundRequest` (defined in `src/types.ts`) declares the field as `customerId: string`, and the test asserts `refund.customerId`. The mismatch caused TS2353 (`'userId' does not exist in type 'RefundRequest'`) and caused the returned object to have no `customerId` at runtime, so the test assertions (`toContain('c-42')`) failed.
+
+**Exact change:** One line in `C:\codeagent\dynamic-workflows-lab\fixtures\exp2-fix\src\refunds.ts` (line 7):
+```diff
+-    userId: order.customerId,
++    customerId: order.customerId,
+```
+No changes to `tests/` or `src/types.ts` were made. The fix follows the existing value already on `order.customerId` and matches the declared type.
+
+**Verification output:**
+- `npx vitest run tests/refunds.test.ts` → `Test Files 1 passed (1)`, `Tests 2 passed (2)` — both `carries the customer id on the refund request` and the guard test `summarizes a refund for the ops log` pass.
+- `npx tsc --noEmit` → clean (no output, exit 0).

@@ -1,0 +1,193 @@
+All six diffs are exactly one line each, all six tests pass, and tsc is clean. Here is the full report.
+
+## Verdicts
+
+**1. src/config.ts — CORRECT**
+`BATCH_SIZE` is now `100` (was `99`). Diff is the single-line `99 → 100` change. `src/batching.ts` imports it and chunks by it; `tests/batching.test.ts` confirms 250 ids split into `[100, 100, 50]` with overflow `50`.
+
+**2. src/dates.ts — CORRECT**
+Month now renders as `String(m + 1).padStart(2, '0')`. Verified against all three test expectations: March (`getUTCMonth()` = 2) → `03`, December (11) → `12`, January (0) → `01`. The change only touches the month segment, so the existing `String(day).padStart(2, '0')` still pads single-digit days (`tests/dates.test.ts` asserts `-05` for the 5th). Both month formatting and day padding preserved.
+
+**3. src/money.ts — CORRECT**
+`applyDiscountCents` now wraps in `Math.round`, which is JS's half-up rounding for positive `.5` values. Adversarial check: `333 * 50%` → `333 - 166.5 = 166.5` → `Math.round` → `167` passes the half-up case. Also `1999 * 15%` → `1699.15` → `1699`, and `1000 * 10%` → `900`. All three test cases pass.
+
+**4. src/refunds.ts — CORRECT**
+Key renamed `userId:` → `customerId: order.customerId`. Matches the `RefundRequest` interface in `src/types.ts` (which has `customerId`, no `userId`). `refundSummary` reads `refund.customerId`, so this was a genuine wiring bug, now consistent end-to-end. Test confirms `customerId === 'c-42'` and the summary contains it.
+
+**5. src/retry.ts — CORRECT**
+After the retry loop it now `throw lastError` instead of `return undefined as T`. Trace: 3 attempts, each failure assigns `lastError`; the final one is `boom 3`, so it rejects with `'boom 3'` and `calls === 3`. Success path still `return await fn()` inside the try, so it resolves with the value on eventual success. Both test cases pass.
+
+**6. src/sorting.ts — CORRECT**
+Comparator is `b.createdAt.localeCompare(a.createdAt)` (descending by `createdAt`) and the `[...orders]` immutability copy is intact. Test confirms order `['o-2','o-3','o-1']` and that the input array is unmutated.
+
+## Minimality / collateral checks
+- `git status --porcelain`: only the 6 `src/*.ts` files modified; no test files, no other files touched.
+- `git diff --stat`: each file is exactly 1 insertion / 1 deletion. The full diff shows no comment rewriting, no reformatting, no stray changes — the only 6 removed lines and 6 added lines are precisely the intended fixes.
+
+## Commands run
+- `npm test` — **6 test files passed (12 tests)**, verbatim tail:
+  ```
+   Test Files  6 passed (6)
+        Tests  12 passed (12)
+   Duration 404ms
+  ```
+- `npx tsc --noEmit` — **exit code 0**, no output (clean).
+
+## Summary
+All six fixes are CORRECT, minimal (one line each), and independently confirmed against the tests in `tests/`. The suite and type-check are both fully green. No file was left unedited, and I did not modify anything.
+
+=====
+
+Fix applied. Exact diff:
+
+```diff
+--- a/src/config.ts
++++ b/src/config.ts
+@@ -3,7 +3,7 @@
+ 
+ // ORD-88: orders are dispatched in chunks of exactly 100 ids; the remainder
+ // forms the final batch. Agreed with logistics on 2026-07-11.
+-export const BATCH_SIZE = 99
++export const BATCH_SIZE = 100
+ 
+ export const MAX_RETRIES = 3
+```
+
+Only the `BATCH_SIZE` value was changed (99 → 100) in `C:\codeagent\dynamic-workflows-lab\fixtures\exp2-fix\src\config.ts`. The comment, all other constants, tests/, and every other file were left untouched.
+
+=====
+
+Done. The fix is applied to `C:\codeagent\dynamic-workflows-lab\fixtures\exp2-fix\src\money.ts`.
+
+**Diff applied:**
+```diff
+   return cents - (cents * percentOff) / 100
++  return Math.round(cents - (cents * percentOff) / 100)
+```
+Single line in `applyDiscountCents` (line 3). Result: `applyDiscountCents(1999, 15)` now returns `1699`, matching spec FIN-19's whole-cents half-up requirement.
+
+Nothing else changed: same arithmetic, formatting, and comment preserved; `formatCents` and `addCents` untouched; no test or other files modified. Verified with `npx tsc --noEmit` — passes with no errors.
+
+=====
+
+Fix applied and verified. Typecheck passes (`npx tsc --noEmit`, exit 0).
+
+Applied diff to `C:\codeagent\dynamic-workflows-lab\fixtures\exp2-fix\src\sorting.ts` — exactly one line changed, nothing else:
+
+```diff
+ export function newestFirst(orders: Order[]): Order[] {
+-  return [...orders].sort((a, b) => a.id.localeCompare(b.id))
++  return [...orders].sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+ }
+```
+
+The comparator now sorts newest first by `createdAt` (ISO 8601 strings lexicographically sortable, so this matches OPS-12). The `[...orders]` input-immutability copy was left untouched, and no tests or other files were modified. Note: the working tree also contains pre-existing uncommitted fixes in `src/config.ts`, `src/dates.ts`, `src/money.ts`, `src/refunds.ts`, and `src/retry.ts` from the earlier bug-fix work — those were not touched by me.
+
+=====
+
+Done. Applied the exact fix requested in `C:\codeagent\dynamic-workflows-lab\fixtures\exp2-fix\src\retry.ts`: replaced `return undefined as T` with `throw lastError` after the retry loop. Per RET-7, the last caught error now propagates to callers for logging/on-call paging instead of silently returning `undefined`.
+
+Exact diff applied:
+```diff
+@@ line 14
+-  return undefined as T
++  throw lastError
+```
+
+Verified with `npx tsc --noEmit` (no output = clean typecheck). Nothing else changed; tests/ and other files untouched.
+
+=====
+
+Typecheck passes cleanly. Done.
+
+## Report
+
+**File changed:** `C:\codeagent\dynamic-workflows-lab\fixtures\exp2-fix\src\dates.ts` (only this file)
+
+**Exact diff applied:**
+```
+-  return `${y}-${String(m).padStart(2, '0')}-${String(day).padStart(2, '0')}`
++  return `${y}-${String(m + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+```
+
+**Key findings:**
+- Root cause confirmed: line 7 assigns `d.getUTCMonth()` (0-based, March → 2) to local `m`, and line 9 used `String(m)` directly in the `YYYY-MM-DD` format.
+- The fix adds `+ 1` to the month before padding, per spec OPS-31 (1-based months). `shortDate('2026-03-08T12:00:00Z')` now renders `2026-03-08`.
+- Nothing else in the function was changed — the local `m` and surrounding structure are untouched. No tests/ or other files were modified.
+- Verified with `npm run typecheck` (`tsc --noEmit`), which passes with no errors.
+
+**Note:** the working tree already contained uncommitted edits in four other files (`src/config.ts`, `src/money.ts`, `src/refunds.ts`, `src/retry.ts`) from a prior session's planted-bug fixes — these are unrelated to my task and were left untouched.
+
+=====
+
+Fixed. `npx tsc --noEmit` now passes clean (no output, exit 0).
+
+File changed: `C:\codeagent\dynamic-workflows-lab\fixtures\exp2-fix\src\refunds.ts` (line 7)
+
+Diff applied:
+```diff
+-    userId: order.customerId,
++    customerId: order.customerId,
+```
+
+Nothing else was touched — `src/types.ts` (and the `RefundRequest` interface), `tests/`, and all other files are unchanged. The returned object now uses the correct `customerId` key, so `refundSummary` in `refunds.ts` reads the value instead of `undefined`, and the TS2353 error is resolved.
+
+=====
+
+All files read, both commands run. Full report follows.
+
+# exp2-fix — Failure Report (6 runtime test failures + 1 tsc error)
+
+`npm test`: 6 test files, 6 failed / 6 passed. `npx tsc --noEmit`: 1 error. Note that vitest transpiles with esbuild and does no type checking, so the tsc error is only visible via the separate `typecheck` run.
+
+## 1. refunds — customer id missing on refund request
+
+- Test: `tests/refunds.test.ts` » `refunds > carries the customer id on the refund request` (line 15).
+- Expected `refund.customerId === 'c-42'`; actual `undefined` (object literal has no `customerId`).
+- Root cause: `src/refunds.ts:7` builds the refund with the object key `userId`, but `RefundRequest` and `refundSummary` both use `customerId`, so the value is dropped.
+- Fix: rename the literal key to `customerId` (`customerId: order.customerId`), matching the interface at `src/types.ts:10`.
+- **This is the bug that shows up as a tsc error too**: `src/refunds.ts(7,5): error TS2353 — 'userId' does not exist in type 'RefundRequest'` (excess property check). tsc surfaces it as a compile error; vitest surfaces the same root cause at runtime (undefined field). The second test in this file passes only because `'$25.00'` prefix matches before the `customer` segment.
+
+## 2. retry — last error swallowed after exhausting attempts
+
+- Test: `tests/retry.test.ts` » `withRetry > rejects with the last error after exhausting attempts (RET-7)` (line 11).
+- Expected rejection with `Error('boom 3')`; actual promise resolves `undefined`. (`calls === 3` passes.)
+- Root cause: `src/retry.ts:14` catches every error and, after the loop, `return undefined as T` instead of rethrowing.
+- Fix: after the `for` loop, `throw lastError` rather than returning a cast undefined.
+
+## 3. money — discount not rounded to whole cents
+
+- Test: `tests/money.test.ts` » `money > rounds discounts to whole cents, half-up (FIN-19)` (line 6).
+- `applyDiscountCents(1999, 15)` returns `1699.15`; expected `1699`. (`1000→900` and half-up case `333→167` also depend on rounding.)
+- Root cause: `src/money.ts:3` returns the raw float `cents - (cents * percentOff) / 100` with no rounding.
+- Fix: wrap the result (or the discount term) in `Math.round(...)` to round half-up to whole cents.
+
+## 4. dates — 0-based month rendered instead of 1-based
+
+- Test: `tests/dates.test.ts` » `shortDate > renders UTC dates with 1-based months (OPS-31)` (line 6).
+- `shortDate('2026-03-08T12:00:00Z')` returns `'2026-02-08'`; expected `'2026-03-08'`.
+- Root cause: `src/dates.ts:7` uses `d.getUTCMonth()` directly, which is 0-based (March → 2); the year and day are correct.
+- Fix: add `+ 1` to the month before padding (`String(m + 1).padStart(2, '0')`).
+
+## 5. batching — chunk size configured to 99 instead of 100
+
+- Test: `tests/batching.test.ts` » `batchIds > splits 250 ids into chunks of 100 per ORD-88` (line 8).
+- Actual batch lengths `[99, 99, 52]`; expected `[100, 100, 50]`; `overflow` 52 vs expected 50.
+- Root cause: `src/config.ts:6` sets `BATCH_SIZE = 99` while the unit contract (and the ORD-88 comment on that same line) specify exactly 100. The loop logic in `src/batching.ts` is correct — it slices by `BATCH_SIZE`.
+- Fix: set `BATCH_SIZE = 100`. (This is a config-value bug, not an algorithm bug.)
+
+## 6. sorting — sorted by id not by createdAt
+
+- Test: `tests/sorting.test.ts` » `newestFirst > sorts orders newest first (OPS-12)` (line 14).
+- Actual order `['o-1','o-2','o-3']`; expected `['o-2','o-3','o-1']` (createdAt desc: 08-03, 08-02, 08-01).
+- Root cause: `src/sorting.ts:8` compares `a.id.localeCompare(b.id)` (ascending by id) instead of ordering by `createdAt` newest-first. The `[...orders]` copy in the same line is correct, so the immutability guard passes.
+- Fix: change the comparator to a descending comparison on `createdAt` (e.g., `b.createdAt.localeCompare(a.createdAt)`).
+
+## Summary of root causes → file:line
+
+- `src/refunds.ts:7` — wrong key `userId` in returned object; should be `customerId` (also the sole `tsc` error, TS2353).
+- `src/retry.ts:14` — returns `undefined as T` after exhausting attempts; must `throw lastError`.
+- `src/money.ts:3` — discount result never rounded half-up to whole cents.
+- `src/dates.ts:7` — `getUTCMonth()` used without `+ 1` (0-based month).
+- `src/config.ts:6` — `BATCH_SIZE = 99`; contract and tests require 100.
+- `src/sorting.ts:8` — comparator sorts ascending by `id`; must sort descending by `createdAt`.

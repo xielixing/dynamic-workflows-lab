@@ -1,0 +1,1 @@
+Money fix applied. 2 down, 4 diagnosis reports to go.

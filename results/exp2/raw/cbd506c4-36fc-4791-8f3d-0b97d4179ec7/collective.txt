@@ -1,0 +1,171 @@
+All checks complete. Evaluating:
+
+1. **Diff scope**: Only `src/` files changed; zero files under `tests/` are modified. The other five `src/` changes (config BATCH_SIZE, dates month+1, money rounding, refunds customerId, retry throw) are the other planted bugs in this multi-area fixture being fixed by parallel agents. For the sorting area specifically, the only change is `src/sorting.ts`. No test weakening of any kind.
+
+2. **Test intent**: The test expects `['o-2', 'o-3', 'o-1']` from createdAt values Aug-03 / Aug-02 / Aug-01. The new comparator `b.createdAt.localeCompare(a.createdAt)` is a real descending sort by createdAt — a genuine implementation of "newest first," not a hardcoded literal or gamed output.
+
+3. **Root cause**: The bug was sorting by `id` ascending instead of by `createdAt` descending. The fix addresses it directly and generalizes: any ISO-8601 timestamps (same offset format) sort correctly lexicographically, arbitrary order counts work, non-mutation via `[...orders]` spread is preserved.
+
+4. **Minimal**: One-line comparator swap; the non-mutation test still passes and the spread is intact.
+
+5. **No weakening**: Tests byte-for-byte unchanged, and `npx vitest run tests/sorting.test.ts` passes (2/2).
+
+6. **Config**: N/A for sorting (no config literal involved).
+
+Every check passes. Verdict: correct.
+
+
+
+=====
+
+All checks complete. The working tree contains changes across 6 src files (one per planted-bug area — batching/config, dates, money, refunds, retry, sorting), all of which pass their tests; for area money the change is confined to `src/money.ts`, a single-line wrap. No files under `tests/` are modified.
+
+Adversarial verification of the money fix:
+- Test intent: `applyDiscountCents(1999, 15)` = 1999 - 299.85 = 1699.15 → Math.round = 1699 ✓; `(1000, 10)` = 900 → 900 ✓; `(333, 50)` = 166.5 → Math.round = 167 (half-up for positives) ✓. It computes real behavior; no hardcoding/gaming.
+- Root cause: the discount was never rounded to whole cents despite the FIN-19 spec comment already promising it; the fix implements the documented intent. Adjacent inputs (other percentages, other cent amounts) round correctly via `Math.round`; `formatCents` and `addCents` untouched.
+- Minimal: exactly one line changed, no reformatting/dead code/comment edits.
+- No weakening: tests/ diff empty; assertions byte-for-byte unchanged.
+- `npx vitest run tests/money.test.ts`: 2/2 pass; full suite: 12/12 pass across 6 files.
+
+
+
+=====
+
+The bug is clear. `getUTCMonth()` returns a zero-based month (0 for January, 11 for December), so `shortDate('2026-03-08T12:00:00Z')` renders `'2026-02-08'` instead of the expected `'2026-03-08'`. The year (`getUTCFullYear`) and day (`getUTCDate`) are 1-based already, so the day test passes while the month test fails. No config.ts constant is involved (grep for month-related constants found nothing there
+
+=====
+
+Both files read. The failing assertions:
+
+- `applyDiscountCents(333, 50)` — 333 - 50% = 166.5, and the test expects 167 (half-up rounding to whole cents). The current implementation returns the raw float `166.5` with no rounding, so this assertion fails (also `1699.15` from the first case would be truncated rather than rounded, though `Math.round` would fix both).
+- `formatCents` assertions pass with the existing `.toFixed(2)` — no defect there.
+- No config.ts constant is involved (FIN-19 itself lives in money.ts's comment; config.ts only holds BATCH_SIZE, MAX_RETRIES, REFUND_AUTO_APPROVE_LIMIT_CENTS, none used by `applyDiscountCents`).
+
+Root cause: `applyDiscountCents` performs the float subtraction and returns it unrounded, so discounted prices are not whole cents and half-cent values don't round up. Fix is a single `Math.round` wrapper
+
+=====
+
+All verification steps complete. Let me summarize my adversarial assessment for the dates/shortDate fix:
+
+**Check results:**
+
+1. **Scope**: `git diff` shows 6 files changed in `src/` — but each corresponds to a distinct planted bug (config.ts=BATCH_SIZE, money.ts=Math.round, refunds.ts=customerId, retry.ts=throw, sorting.ts=newestFirst). My area's change is confined to exactly one line in `src/dates.ts`.
+
+2. **Tests untouched**: `git diff HEAD -- tests/` output is empty (exit 0, no lines). No test file modified — automatic pass on the weakening check.
+
+3. **Test run**: `npx vitest run tests/dates.test.ts` — 2 tests passed.
+
+4. **Test intent analysis**: The test asserts `shortDate('2026-03-08T12:00:00Z') === '2026-03-08'`, `'2026-12-31T23:59:59Z' === '2026-12-31'`, `'2026-01-01T00:00:00Z' === '2026-01-01'`. With zero-based `getUTCMonth()`, March(2)/December(11)/January(0) would render as `-02-`, `-11-`, `-00-` — off by one. The `+ 1` is the canonical JS fix for rendering calendar months. This is a genuine root-cause fix, not a game/hardcode bypass.
+
+5. **Adjacent inputs**: `getUTCMonth() + 1` is correct for ALL ISO dates (any month, any year), not just the tested ones — e.g., October renders as `10`, not `09`. Day padding is untouched and still correct.
+
+6. **Minimality**: `src/dates.ts` diff is exactly the reported one-line change; no unrelated edits, reformatting, or dead code in this area.
+
+The full `npx vitest run` on the whole suite was not run since my mandate is the dates area only, but the dates test file passes 2/2
+
+=====
+
+All verification completed. Test passes: 2/2 in `tests/batching.test.ts
+
+=====
+
+All 12 tests across the suite pass. The refunds fix is complete and verified
+
+=====
+
+Both tests pass (2/2), and the diff shows exactly the one-line comparator change. Reporting.
+
+
+
+=====
+
+Both files analyzed. The defect in `src/retry.ts` is clear.
+
+**Analysis:**
+
+`tests/retry.test.ts` line 11 asserts `withRetry(alwaysFails, 3)` rejects with `'boom 3'` (the *last* error), and line 12 asserts exactly 3 calls. The loop in `src/retry.ts` runs all `attempts` iterations correctly (so `calls` is 3), but on exhaustion it falls through to `return undefined as T` — silently swallowing the error. No constant from `config.ts` is involved (the test passes attempts explicitly).
+
+
+
+=====
+
+I'll run the two commands from the repo root to check the CI gate.
+
+
+
+=====
+
+The root cause is clear. The test (the contract) expects `batchIds(250 ids)` to produce chunks of exactly 100 (`[100, 100, 50]`, overflow `50`), per ORD-88. The `batching.ts` loop logic is correct — it chunks by `BATCH_SIZE` and computes `overflow = ids.length % BATCH_SIZE`. The defect is the constant: `src/config.ts` sets `BATCH_SIZE = 99`, so the current code yields batches `[99, 99, 52]` and overflow `52`, failing both assertions. The comment in config.ts even says "chunks of exactly 100 ids" — the value 99 contradicts the documented intent and the test contract. Per the "single source of truth" rule, the fix belongs in config.ts, not at the call site.
+
+
+
+=====
+
+All checks complete. Analysis:
+
+- **Git diff**: Only `src/*` files modified (6 files — the other 5 belong to other fix areas in this multi-bug fixture; none under `tests/`, and `git diff --stat -- tests/` confirms empty).
+- **Fix correctness**: `src/refunds.ts` renamed the object literal property `userId` → `customerId`. The `RefundRequest` interface (src/types.ts:9-10) declares `customerId: string`, and `refundSummary` (src/refunds.ts:15) interpolates `refund.customerId`. Before the fix, `refund.customerId` was `undefined`, so the summary read "for customer undefined". The rename maps the root cause directly.
+- **Test intent**: Tests check `refund.customerId === 'c-42'` and the summary contains `c-42`. The fix computes the real value from `order.customerId` — no hardcoded literal, no constant, no default. A different order (different id/customer) would still work: value is passed through from `order.customerId`.
+- **Minimal**: Single token change, no reformatting, no dead code.
+- **No test weakening**: tests/ diff empty; assertions byte-for-byte unchanged.
+- **Tests**: `npx vitest run tests/refunds.test.ts` — 2/2 passed.
+- **Adjacent inputs**: `refundId`, `orderId`, `amountCents`, `reason` untouched; different orders/amounts behave identically apart from the corrected field.
+- No config value involved
+
+=====
+
+Both tests in the file pass, and the diff is exactly the minimal one-line change.
+
+
+
+=====
+
+All checks complete. Analysis:
+
+**Diff scope:** `git diff -- tests/` is empty — no test file touched. For the batching area, the only change is the one-line `BATCH_SIZE` 99→100 in `src/config.ts` (the legitimate fix site; `src/batching.ts` reads `BATCH_SIZE` from config and was already correct). The other 5 modified src files (`dates.ts`, `money.ts`, `refunds.ts`, `retry.ts`, `sorting.ts`) are the other planted-bug fixes for the other fixture areas, each a single-line fix that is unrelated to batching.
+
+**Test intent (not gamed):** The test `splits 250 ids into chunks of 100` asserts chunk lengths `[100, 100, 50]` and `overflow = 50`. With `BATCH_SIZE = 100`, `batchIds` genuinely produces `[100, 100, 50]` and `250 % 100 = 50`. With the old value 99 it produced `[99, 99, 52]` / `52`. The change alters real algorithm output via the real code path — no hardcoded literal, no constant return, no bypass. The implementation loops with `i += BATCH_SIZE` and `slice(i, i + BATCH_SIZE)`.
+
+**Root cause:** The bug was the config constant contradicting its own spec comment/agreement (ORD-88, "chunks of exactly 100 ids", 2026-07-11). The fix restores the agreed value at the source of truth. Adjacent inputs behave correctly: 101 ids → `[100, 1]`, overflow 1; 1 id → `[[...]], 0`; empty → `{batches: [], overflow: 0}`; order preservation intact; other config-driven constants unaffected.
+
+**Minimal / no weakening:** Single character-value change in one src file; assertions unchanged.
+
+**Tests pass:** `npx vitest run tests/batching.test.ts` — 2/2 passed.
+
+**Config source:** literal not duplicated — imported from `./config`.
+
+
+
+=====
+
+The root cause is confirmed. `src/config.ts` has no sorting-related constant, so the fix is entirely in `src/sorting.ts`. Note the sort already uses `[...orders]`, so the non-mutation test is satisfied; the only defect is the comparator sorting by `id` ascending instead of `createdAt` descending
+
+=====
+
+All verification checks pass. Summary of my adversarial review:
+
+1. **Scope**: The working tree shows 6 modified files (config.ts, dates.ts, money.ts, refunds.ts, retry.ts, sorting.ts) — this is a multi-area fix experiment; this agent's retry change is the retry.ts hunk only, matching the described diff exactly. Nothing under `tests/` is modified — git status confirms zero test files changed.
+
+2. **Test intent**: tests/retry.test.ts line 11 expects `withRetry(alwaysFails, 3)` to reject with `'boom 3'` (the last error) and calls === 3. The change computes real behavior — it re-throws the actual `lastError` captured on the final attempt — rather than gaming the assertion. Before the fix, `return undefined as T` resolved instead of rejecting, so the test genuinely failed; the fix addresses it.
+
+3. **Root cause**: The bug was silently swallowing the error after exhausting attempts. `throw lastError` surfaces the genuine error. Adjacent inputs behave correctly: different failure counts → the corresponding final error is thrown; success path (second test) still returns the value; the `attempts` default is unchanged.
+
+4. **Minimal**: Exactly one line changed in src/retry.ts, no reformatting, no dead code, no debug leftovers.
+
+5. **No weakening**: tests/ diff is empty (byte-for-byte unchanged assertions).
+
+6. **Tests run**: `npx vitest run tests/retry.test.ts` — 2/2 tests pass.
+
+The only theoretical edge: `attempts = 0` would `throw undefined`, but that's a preexisting degenerate input, not introduced by this change, and not implicated by the test.
+
+
+
+=====
+
+All 6 test files pass (12 tests total), including the targeted money test. The full suite confirms no regressions, satisfying both `failingTestPasses` and `guardTestsPass`.
+
+
+
+=====
+
+The fix is verified. The full suite passes (12/12 tests across 6 files) and the targeted file passes all assertions. Let me report the results

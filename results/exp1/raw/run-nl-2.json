@@ -1,0 +1,13 @@
+{
+  "exp": "exp1",
+  "arm": "nl",
+  "run": 2,
+  "startedAt": "2026-09-01T12:50:55.154Z",
+  "durationMs": 201573,
+  "exit": 0,
+  "sessionId": "fbb42b60-1c10-4315-afe9-fdfd5330e1f9",
+  "result": "The reporting module agent finished with **NO FINDINGS** — matches my ground-truth pass (reporting module is clean). Still waiting on the other 7 agents.",
+  "isError": false,
+  "costUsd": 1.8184280000000002,
+  "stderr": ""
+}

@@ -1,0 +1,1 @@
+Group 4 (shared/index) reported: **0 findings** — matches my read. One group left (pricing/inventory, 7 files, where 3 planted bugs should be).

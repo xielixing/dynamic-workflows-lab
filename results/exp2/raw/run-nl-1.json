@@ -1,0 +1,23 @@
+{
+  "exp": "exp2",
+  "arm": "nl",
+  "run": 1,
+  "startedAt": "2026-09-01T13:20:23.884Z",
+  "durationMs": 234820,
+  "exit": 0,
+  "sessionId": "123e0ca1-90b7-4ffb-b0a3-e3ee876ac2fd",
+  "testsGreen": true,
+  "testOutputTail": "\n\u001b[1m\u001b[46m RUN \u001b[49m\u001b[22m \u001b[36mv3.2.7 \u001b[39m\u001b[90mC:/codeagent/dynamic-workflows-lab/fixtures/exp2-fix\u001b[39m\n\n \u001b[32m✓\u001b[39m tests/money.test.ts \u001b[2m(\u001b[22m\u001b[2m2 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 2\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m tests/dates.test.ts \u001b[2m(\u001b[22m\u001b[2m2 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 2\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m tests/retry.test.ts \u001b[2m(\u001b[22m\u001b[2m2 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 3\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m tests/refunds.test.ts \u001b[2m(\u001b[22m\u001b[2m2 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 3\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m tests/batching.test.ts \u001b[2m(\u001b[22m\u001b[2m2 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 2\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m tests/sorting.test.ts \u001b[2m(\u001b[22m\u001b[2m2 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 11\u001b[2mms\u001b[22m\u001b[39m\n\n\u001b[2m Test Files \u001b[22m \u001b[1m\u001b[32m6 passed\u001b[39m\u001b[22m\u001b[90m (6)\u001b[39m\n\u001b[2m      Tests \u001b[22m \u001b[1m\u001b[32m12 passed\u001b[39m\u001b[22m\u001b[90m (12)\u001b[39m\n\u001b[2m   Start at \u001b[22m 21:24:22\n\u001b[2m   Duration \u001b[22m 436ms\u001b[2m (transform 266ms, setup 0ms, collect 390ms, tests 22ms, environment 1ms, prepare 635ms)\u001b[22m\n\n",
+  "tscClean": true,
+  "changedFiles": [
+    "src/config.ts",
+    "src/dates.ts",
+    "src/money.ts",
+    "src/refunds.ts",
+    "src/retry.ts",
+    "src/sorting.ts"
+  ],
+  "result": "Everything checks out. Both verification targets pass, and the diff is exactly 6 one-line changes in `src/` — nothing in `tests/`, no weakened assertions.\n\n## Summary\n\nThe fixture's test suite was failing on **6 planted bugs** in `src/` (one per failing test). I diagnosed the root causes with an investigation subagent, then fixed each independently with a subagent per file, and had a separate adversarial subagent verify all six fixes.\n\n### What was wrong and what changed (one line per file):\n\n| File | Root cause | Fix |\n|---|---|---|\n| `src/config.ts` | `BATCH_SIZE = 99`, but spec **ORD-88** requires chunks of exactly 100 | `99 → 100` |\n| `src/dates.ts` | `getUTCMonth()` is 0-based, so March rendered as `02` (`OPS-31`) | `m` → `m + 1` before padding |\n| `src/money.ts` | Discount returned raw float (e.g. `1699.15`), not whole cents (`FIN-19`) | Wrap result in `Math.round(...)` |\n| `src/refunds.ts` | Object key `userId:` instead of the interface's `customerId`, dropping the value (also the `tsc` error: TS2353) | `userId:` → `customerId:` |\n| `src/retry.ts` | After retries exhausted, returned `undefined as T`, silently swallowing the error (`RET-7`) | `throw lastError` |\n| `src/sorting.ts` | Sorted ascending by `id` instead of newest-first by `createdAt` (`OPS-12`) | Comparator now `b.createdAt.localeCompare(a.createdAt)`, immutability copy kept |\n\n### Verification\n- `npm test` → **6 test files, 12/12 tests pass** (exit 0)\n- `npx tsc --noEmit` → **clean, exit 0**\n\n`git diff --stat` confirms exactly **6 insertions / 6 deletions across the six `src/` files** — no changes to `tests/`, no assertion weakening, no comments or unrelated lines touched. Each fix addresses the semantic root cause (not the symptom), and each was independently verified by a separate subagent against the original tests.",
+  "costUsd": 1.861149,
+  "stderr": ""
+}

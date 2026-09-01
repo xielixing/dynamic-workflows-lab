@@ -1,0 +1,23 @@
+{
+  "exp": "exp2",
+  "arm": "wf",
+  "run": 2,
+  "startedAt": "2026-09-01T13:48:46.518Z",
+  "durationMs": 426318,
+  "exit": 0,
+  "sessionId": "cbd506c4-36fc-4791-8f3d-0b97d4179ec7",
+  "testsGreen": true,
+  "testOutputTail": "\n\u001b[1m\u001b[46m RUN \u001b[49m\u001b[22m \u001b[36mv3.2.7 \u001b[39m\u001b[90mC:/codeagent/dynamic-workflows-lab/fixtures/exp2-fix\u001b[39m\n\n \u001b[32m✓\u001b[39m tests/dates.test.ts \u001b[2m(\u001b[22m\u001b[2m2 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 2\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m tests/money.test.ts \u001b[2m(\u001b[22m\u001b[2m2 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 2\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m tests/retry.test.ts \u001b[2m(\u001b[22m\u001b[2m2 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 4\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m tests/refunds.test.ts \u001b[2m(\u001b[22m\u001b[2m2 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 2\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m tests/batching.test.ts \u001b[2m(\u001b[22m\u001b[2m2 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 2\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m tests/sorting.test.ts \u001b[2m(\u001b[22m\u001b[2m2 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 12\u001b[2mms\u001b[22m\u001b[39m\n\n\u001b[2m Test Files \u001b[22m \u001b[1m\u001b[32m6 passed\u001b[39m\u001b[22m\u001b[90m (6)\u001b[39m\n\u001b[2m      Tests \u001b[22m \u001b[1m\u001b[32m12 passed\u001b[39m\u001b[22m\u001b[90m (12)\u001b[39m\n\u001b[2m   Start at \u001b[22m 21:55:57\n\u001b[2m   Duration \u001b[22m 395ms\u001b[2m (transform 243ms, setup 0ms, collect 361ms, tests 25ms, environment 1ms, prepare 607ms)\u001b[22m\n\n",
+  "tscClean": true,
+  "changedFiles": [
+    "src/config.ts",
+    "src/dates.ts",
+    "src/money.ts",
+    "src/refunds.ts",
+    "src/retry.ts",
+    "src/sorting.ts"
+  ],
+  "result": "The workflow completed successfully. Here's the full summary.\n\n## Result\n\n**Final state:** `npm test` → **12/12 passing**, `npx tsc --noEmit` → **clean** (exit 0). Tests/ untouched (0 modified files), all 6 fixes are single-line source changes.\n\n## How the workflow ran\n\n1. **Round 1 – Check:** CI-gate agent ran `npm test` + `tsc` → 6 failing tests across all 6 test files, plus `TS2353` in `src/refunds.ts`.\n2. **Diagnose (6 parallel agents):** one agent per failing area poured over each `tests/<area>.test.ts` + `src/<area>.ts` pair and reported the root cause + proposed change. All six landed on the real defects.\n3. **Fix (6 parallel agents):** one fix agent per root cause, instructed to sanity-check the diagnosis against the test contract and make the minimal `src/` edit (with the caveat to edit `src/config.ts` when the constant is the source of truth).\n4. **Verify (6 independent adversarial verifiers):** each was told to *try to condemn* its fix — checked the diff touched only `src/`, confirmed tests/ byte-for-byte unchanged, checked the fix computes real behavior (not assertion-gaming/hardcoding), and generalized to adjacent inputs. All six → `correct`.\n5. **Round 2 – Check:** CI-gate re-ran the suite → green, so the loop terminated on the natural condition (no need for the two-no-progress stop).\n\n## Root causes and fixes\n\n| Area | Root cause | Fix | Test |\n|---|---|---|---|\n| `src/config.ts` | `BATCH_SIZE` was **99** (`src/batching.ts` correctly slices by it) | `99` → `100` | ORD-88 (250 ids → 100/100/50) |\n| `src/dates.ts` | `getUTCMonth()` is zero-based, rendered raw | `+ 1` before formatting | OPS-31 (2026-03-08 → `2026-03-08`) |\n| `src/money.ts` | discount result left as a bare float (`166.5`) | wrap formula in `Math.round(...)` | FIN-19 half-up (`166.5` → `167`) |\n| `src/refunds.ts` | literal used `userId:`; type declares `customerId` → `undefined` + TS2353 | `userId:` → `customerId:` | refund carries `c-42` |\n| `src/retry.ts` | `return undefined as T` swallowed the last error | `throw lastError` | RET-7 (`rejects.toThrow('boom 3')`) |\n| `src/sorting.ts` | comparator sorted by id ascending | `Date`-descending using `createdAt` | OPS-12 (newest first) |\n\nEach fix went through the spec comment already in the source (e.g. FIN-19's \"rounded half-up\") — the tests guard the documented intent, and every fix satisfies it plus adjacent inputs.\n\nNo commit was made (working tree left with the 6 edits). Want me to commit these, or update the memory?",
+  "costUsd": 3.1314810000000004,
+  "stderr": ""
+}

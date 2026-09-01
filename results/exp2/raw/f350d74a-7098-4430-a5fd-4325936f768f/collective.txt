@@ -1,0 +1,108 @@
+Investigation complete. Report:
+
+**Root cause.** In `src/refunds.ts` the object literal returned by `createRefund` writes `userId: order.customerId`, but there is no `userId` field anywhere in the codebase — the `RefundRequest` interface in `src/types.ts` declares the field as `customerId` (and `refundSummary` already reads `refund.customerId`). So the literal both violates the type (TS2353: `'userId' does not exist in type 'RefundRequest'`) and produces a `RefundRequest` whose required `customerId` is `undefined`, which is exactly what the tests assert against (`expect(refund.customerId).toBe('c-42')` and the summary containing `c-42` both fail at runtime).
+
+**Proposed minimal fix** in `src/refunds.ts` line 7:
+
+Current:
+```ts
+    userId: order.customerId,
+```
+Replacement:
+```ts
+    customerId: order.customerId,
+```
+
+That single rename aligns the produced object with both the type and the consumers; no other edits are needed.
+
+**Why root-cause fix.** The bug is a single misnamed property — a symptom patch would either add `userId` to the type (contaminating the type with a field nothing reads) or change the tests/summary to use a `userId` (rewriting intent). Renaming the literal key to `customerId` is the minimal change that satisfies the declared type, keeps `refundSummary` working, and makes both tests pass.
+
+=====
+
+Findings:
+
+**1. Root cause.** The RET-7 contract (stated in the file header comment and asserted by the test) is that `withRetry` must reject with the last error after exhausting all attempts: `await expect(withRetry(alwaysFails, 3)).rejects.toThrow('boom 3')`. The code instead hits line 14, `return undefined as T`, which silently swallows the error so the promise resolves with `undefined` rather than rejecting. The collection loop (lines 7-13) is correct — the failure is purely in how post-exhaustion control flow exits.
+
+**2. The minimal one-line fix** in `/codeagent/dynamic-workflows-lab/fixtures/exp2-fix/src/retry.ts`:
+
+Current line 14:
+```ts
+  return undefined as T
+```
+Proposed replacement:
+```ts
+  throw lastError
+```
+
+This only executes when every attempt threw, so the success path (line 9's `return await fn()`) and the retry/backoff behavior are untouched, and TS permits throwing `unknown` directly.
+
+**3. Why this is the root-cause fix.** The silent `return undefined` *is* the bug — it directly violates the function's documented and tested contract (surface the last error so callers log/page, per the 2026-06-19 incident note), and `throw lastError` restores exactly that contract. It doesn't patch the test, mute the error, change attempt count semantics, or work around the symptom; it makes the exhausted-attempts path behave as specified. Any alternative (e.g., adjusting the test to expect `undefined`) would preserve the dangerous silent-failure behavior the header comment explicitly flags as the cause of a production incident.
+
+=====
+
+## Findings
+
+**1. Root cause:** The test asserts `applyDiscountCents` returns whole cents, rounded half-up (spec FIN-19, echoed in the test name). The current code returns the raw floating-point result, so `applyDiscountCents(1999, 15)` produces `1699.15` instead of `1699`. (The other assertions, 900 and 167, happen to be exact/fractional-cents-cases that only the half-up rounding converts correctly — `333 - 166.5 = 166.5`, which `Math.round` correctly maps to 167.)
+
+**2. Exact one-line fix** in `src/money.ts` line 3:
+
+- Current: `return cents - (cents * percentOff) / 100`
+- Replacement: `return Math.round(cents - (cents * percentOff) / 100)`
+
+**3. Why root-cause:** The code comment already declares the invariant "results are money in whole cents, rounded half-up," but the implementation returns fractional cents — violating the core money-domain rule. Wrapping the arithmetic result in `Math.round` enforces the invariant at the point where currency is produced, directly satisfying the spec. A symptom patch would instead change the test's expected value to `1699.15`, which would codify fractional cents (a money-model corruption) and contradict the spec comment.
+
+Note: the full suite (`npx vitest run`) shows 6 failing test files — this money failure plus 5 others in different files (e.g., `tests/sorting.test.ts`). I only investigated the money test since the task scoped to `src/money.ts` / `tests/money.test.ts`.
+
+=====
+
+Both files read. Here is the report.
+
+**Root cause:** `newestFirst` sorts by `id` ascending (`a.id.localeCompare(b.id)`), but the docstring and the test (OPS-12) require orders sorted **newest first by `createdAt`**. ISO-8601 timestamps compare lexicographically, so the fix is a descending compare on `createdAt`. The "does not mutate" test passes regardless because the code already copies with `[...orders]` — the only defect is the comparator.
+
+**Minimal one-line fix in `C:\codeagent\dynamic-workflows-lab\fixtures\exp2-fix\src\sorting.ts`:**
+
+Current line 8:
+```ts
+  return [...orders].sort((a, b) => a.id.localeCompare(b.id))
+```
+
+Proposed replacement:
+```ts
+  return [...orders].sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+```
+
+**Why root-cause, not symptom patch:** The comparator uses the wrong key and wrong direction; fixing it makes the implementation match the documented contract (newest first). A symptom patch would instead tweak the test expectations or sort input, leaving the function wrong for any other order of input data. The fix directly corrects the sort semantics against the field the behavior is defined by.
+
+=====
+
+Both files read. Findings:
+
+**Root cause:** `Date.prototype.getUTCMonth()` returns a 0-based month index (0–11), but spec OPS-31 requires 1-based month rendering (`YYYY-MM-DD`). So `shortDate('2026-03-08T12:00:00Z')` produces `2026-02-08` instead of the expected `2026-03-08`. The test asserts 1-based months; the code offsets by 0.
+
+**Fix (current line in `src/dates.ts:7`):**
+```ts
+  const m = d.getUTCMonth()
+```
+Replace with:
+```ts
+  const m = d.getUTCMonth() + 1
+```
+
+**Why root-cause:** It fixes the actual semantic mismatch (0-based vs 1-based month from the spec) at the source of the value, not a symptom. The hours/minutes are never involved — using `getUTCMonth()` (not `getMonth()`) already correctly honors the "timestamps handled in UTC" requirement (OPS-31), so that part is right; only the month off-by-one is wrong. Patching the test or adjusting the string before/after padding would be symptom-patching. The `+ 1` is idiomatic and keeps padding in the string template as-is.
+
+Files: `C:\codeagent\dynamic-workflows-lab\fixtures\exp2-fix\src\dates.ts` and `C:\codeagent\dynamic-workflows-lab\fixtures\exp2-fix\tests\dates.test.ts`.
+
+=====
+
+Investigation complete. The failure is not in `src/batching.ts` at all — the loop logic is correct (chunks of `BATCH_SIZE`, order preserved, plus `overflow`). The planted bug is the batch size constant itself.
+
+**1. Root cause.** The spec ORD-88 (stated in comments in both files) and the tests require batches of exactly **100** ids: 250 ids → `[100, 100, 50]` and `overflow: 50`. But `src/config.ts:6` hardcodes `BATCH_SIZE = 99`, so `batchIds` produces `[99, 99, 52]` with `overflow: 52`, failing both assertions.
+
+**2. Minimal one-line fix** — in `src/config.ts`, line 6:
+
+- Current: `export const BATCH_SIZE = 99`
+- Replacement: `export const BATCH_SIZE = 100`
+
+**3. Why root-cause.** The incorrect `99` is the single source of truth that drives the chunking (config.ts explicitly says "Values here are the single source of truth"). Correcting it fixes the behavior at its origin; patching anywhere else (e.g. special-casing the remainder in `batchIds`) would be a symptom patch that leaves the wrong constant in place to break future calls. Note the batched-test's bigger `[100, 100, 50]` case is what catches it — the same-array test passes regardless of size.
+
+Files: `C:\codeagent\dynamic-workflows-lab\fixtures\exp2-fix\src\config.ts` (line 6, the fix location), `C:\codeagent\dynamic-workflows-lab\fixtures\exp2-fix\src\batching.ts` (unchanged), `C:\codeagent\dynamic-workflows-lab\fixtures\exp2-fix\tests\batching.test.ts` (correct spec).

@@ -1,0 +1,148 @@
+I've read all three target files fully.
+
+**Analysis:**
+
+- **`src/shared/types.ts`** — Contains only interface/type definitions. No functions, no async calls, no boolean contexts involving promises. Zero findings.
+- **`src/shared/logger.ts`** — `emit` is synchronous and `makeLogger` returns plain arrow functions calling `emit`; no promises are used in boolean contexts. Zero findings.
+- **`src/shared/db.ts`** — The `Table` class methods are `async`, but every internal async call is correctly awaited (`await sleep(...)`). The boolean sites (`idx >= 0` on lines 53 and 59) come from synchronous `Array.prototype.findIndex`; line 27's `this.rows.find(...)` is `Array.prototype.find` with a synchronous predicate, not an async call. Calls like `return this.rows.find(...)` fall under the "return from an async function" exception. Zero findings.
+
+NO FINDINGS
+
+=====
+
+I've read the target file fully (37 lines). Let me analyze each potential boolean-context site:
+
+- **Line 16-17**: `orders.find((o) => o.status === 'paid')` — `orders` is already awaited (`await db.orders.all()`), and `Array.prototype.find` is synchronous, so `paid` in `if (paid)` is an Order object/undefined, not a Promise. Not a bug.
+- **Line 25**: `users.filter((u) => u.active)` — `users` is already awaited; `.filter` is synchronous. Not a bug.
+- **All other statements** (`quoteCart`, `reserveForOrder`, `buildDigestsFor`, `dailyOrderTotals`) are properly awaited before their results are used; line 36 is a re-export, not a boolean context.
+
+There is no call whose Promise result feeds an `if`, `!`, ternary, `&&`/`||`, or array predicate without an `await` in this file.
+
+NO FINDINGS
+
+Findings:
+1. NO FINDINGS
+
+=====
+
+I've read all three files fully. Let me analyze each candidate against the bug pattern.
+
+**userService.ts** — Lines 4-6, 8-10: `getUser`/`activeCustomers` `return db.users...` (returned Promise, intentional). Line 13 awaits `db.users.find` before the `if (!user)` guard. Lines 21-28 await properly. No findings.
+
+**profileService.ts** — Line 5 awaits before `if (!user)`. The `.filter()` predicates (lines 8, 37) are synchronous arrow comparisons (`o.userId === userId`), not async calls. Line 32 uses `Promise.all` with proper await. No findings.
+
+**authService.ts** — Line 36 is the bug: `const allowed = hasPermission(user, action)`. `hasPermission` is declared `async` (line 26), so it returns `Promise<boolean>`, which is always truthy. Line 37's `if (!allowed)` therefore never fires, so `assertCanManage` never throws `ForbiddenError` — a security gate that silently always passes (security review item SEC-12). Line 41 `await recordAccess(...)` is fine.
+
+FINDINGS:
+
+```
+src/users/authService.ts	36	assertCanManage		const allowed = hasPermission(user, action)
+```
+
+Reasoning: `hasPermission` (authService.ts line 26) is declared `async`/returns `Promise<boolean>`, but its result at line 36 is captured without `await`, then consumed by the boolean guard `if (!allowed)` at line 37 — a Promise is always truthy, so `!allowed` is always `false` and the `ForbiddenError` is never thrown.
+
+1. `src/users/authService.ts` line 36, in `assertCanManage`: `const allowed = hasPermission(user, action)` — missing `await`; the Promise result feeds `if (!allowed)` at line 37, silently disabling the authorization gate.
+
+=====
+
+Both test fields parse correctly. I read all four target files fully and analyzed each async/promise-returning call site for use in a boolean context without `await`.
+
+The single finding is in `promoCodes.ts`: `promoIsStale` is declared `async` (line 4), so `promoIsStale(code)` at line 16 returns a Promise. Its result is assigned to `stale`, then negated at line 17. Since a Promise object is always truthy, `!stale` is always `false`, so applyPromo's discount branch is dead code and every call silently returns the original total. The counter-example in the same file (`describePromo`) correctly uses `await`, and `db.promos.find` results are always awaited.
+
+No matching issues in the other three files: `currencyRates.ts` awaits every async call and its `if (!rate)` tests a plain number; `priceCalculator.ts` awaits `db.products.all()` and uses a synchronous `.find` predicate; `discountEngine.ts` contains only synchronous logic whose `.find` predicate is non-async.
+
+Finding:
+
+```
+src/pricing/promoCodes.ts	17	applyPromo		if (!stale) {
+```
+
+Where `stale` is the un-awaited Promise from `promoIsStale(code)` on line 16 (`const stale = promoIsStale(code)`), which should be `const stale = await promoIsStale(code)`.
+
+Numbered list:
+
+1. src/pricing/promoCodes.ts line 17, in `applyPromo`, expression `if (!stale)` — `stale` holds the Promise returned by the async `promoIsStale(code)` (line 16), so `!stale` is always `false` and the promo discount is never applied.
+
+=====
+
+Findings after auditing all three files:
+
+File analysis:
+- `src/orders/orderService.ts` — all async results are properly awaited (`await db.orders.find`, `await priceOfSku`, etc.); `return db.orders.find(id)` is a direct Promise return, which is intentional. No findings.
+- `src/orders/fulfillmentService.ts` — line 26 assigns `hasStock(...)` (declared `async` at line 14) to `ok` without `await`, then line 27 tests `if (!ok)`. A Promise is always truthy, so `!ok` is always `false` and the out-of-stock guard silently never triggers (exactly the "phantom shipments" failure described in the WMS-77 comment).
+- `src/orders/returnsService.ts` — line 51 assigns `autoApprovalBlocked(...)` (declared `async` at line 36) to `blocked` without `await`, then line 52 tests `if (!blocked)`. Always truthy, so the auto-approval branch never runs — refunds silently never auto-approve (defeats the FIN-31 gate).
+
+Structured findings (tab-separated):
+
+```
+src/orders/fulfillmentService.ts	26	fulfillOrder		const ok = hasStock(item.sku, item.qty); if (!ok)
+src/orders/returnsService.ts	51	autoApproveIfEligible		const blocked = autoApprovalBlocked(orderId); if (!blocked)
+```
+
+Numbered list:
+
+1. `src/orders/fulfillmentService.ts` line 26, enclosing function `fulfillOrder`, offending expression `const ok = hasStock(item.sku, item.qty); if (!ok)`
+2. `src/orders/returnsService.ts` line 51, enclosing function `autoApproveIfEligible`, offending expression `const blocked = autoApprovalBlocked(orderId); if (!blocked)`
+
+=====
+
+I've read all four target files fully. Analyzing each for the bug pattern (async call result consumed in a boolean context without `await`):
+
+- **emailService.ts**: All async calls (`stageEmail`, `sleep`) are properly awaited. No boolean contexts consume Promise results.
+- **pushService.ts**: `tokenFor` is awaited at line 23 before `if (!target)` at line 24; `.find` predicate is synchronous. Clean.
+- **digestBuilder.ts**: **BUG FOUND.** Line 21: `const sent = hasDigestBeenSent(id)` — `hasDigestBeenSent` is declared `async` (returns `Promise<boolean>`), but is not awaited. Line 22: `if (!sent)` then evaluates the always-truthy Promise object, so `!sent` is always `false` and the dedupe guard never fires (CRM-204 duplicate digests).
+- **smsService.ts**: `OPT_OUTS.has` is synchronous; `sendSms` is awaited. Clean.
+
+Finding (tab-separated):
+```
+src/notifications/digestBuilder.ts	22	buildDigestsFor		if (!sent) {
+```
+
+The missing `await` is on `hasDigestBeenSent(id)` at line 21, whose Promise result is stored in `sent` and then tested in the boolean guard at line 22 — because a Promise is always truthy, `!sent` is always `false`, so duplicate digest emails are never suppressed.
+
+Numbered list:
+1. `src/notifications/digestBuilder.ts` line 22, in `buildDigestsFor`: `if (!sent)` — the condition tests the Promise assigned without `await` at line 21 (`const sent = hasDigestBeenSent(id)`), so the guard always evaluates `!Promise` → `false` and the digest-dedupe branch never runs.
+
+=====
+
+All three target files have been fully reviewed, with the callee definitions in `src/shared/db.ts` verified (`Table.all/where/insert/find/count` are all `async`; `sleep` returns a Promise).
+
+Analysis of every boolean-context and promise-consuming site in the three target files:
+
+**src/reporting/salesReporter.ts**
+- Line 22 `await db.orders.all()` — awaited.
+- Line 36 `if (rows.length === 0)` — `rows` is already awaited via `await salesRows()` on line 35; operand is a real array length, not a Promise.
+- Line 37 ternary in `.reduce` callback uses sync numeric comparison. Clean.
+
+**src/reporting/auditTrail.ts**
+- Line 16 `void db.events.insert(event).catch(...)` — fire-and-forget with `.catch()`; explicitly excluded.
+- Line 22 `return db.events.where(...)` — Promise returned from async function; explicitly excluded.
+- Lines 26, 31 `await db.events.all()` — awaited. Clean.
+
+**src/reporting/metricsAggregator.ts**
+- Line 9 `isCacheFresh` is properly declared `async`.
+- Line 25 `const fresh = await isCacheFresh(...)` — awaited; line 26 `if (fresh)` is correct.
+- Line 32 `.filter((o) => o.createdAt...)` — sync callback on `Order` fields, not async.
+- Lines 42-44 `if (day)` / `.find((k) => k.startsWith(...))` / `if (key)` — all sync array/string operations. Clean.
+
+Every Promise-returning call in the target files is either correctly awaited, excluded by the explicit rules (`.catch()`-handled, `return someAsync()` from async function), or not present in a boolean context.
+
+NO FINDINGS.
+
+=====
+
+I read all three target files fully and analyzed each call site for the bug pattern.
+
+**Analysis:**
+
+- `src/inventory/stockService.ts` — All predicate callbacks (`filter`, `reduce`) on already-availed data are synchronous. No findings.
+- `src/inventory/reservationService.ts` — **One finding:** In `reserveForOrder`, line 15 calls the async `hasActiveReservation(orderId)` without `await`, storing the Promise in `already`. Line 16 then tests `if (!already)`. Since a Promise is always truthy, `!already` is always false, so the idempotency guard never fires and a duplicate reservation is written every time (directly contradicting the INV-118 contract in the docstring).
+- `src/inventory/supplierSync.ts` — All promise-returning calls are `await`ed; predicates on `SUPPLIER_CATALOG` are synchronous. No findings.
+
+Findings:
+
+	1. src/inventory/reservationService.ts	16	reserveForOrder		if (!already) {
+
+Numbered list:
+1. src/inventory/reservationService.ts, line 16, in `reserveForOrder`: `if (!already) {` — `already` holds the Promise from `hasActiveReservation(orderId)` (line 15, no `await`), so the guard is always false.
+2. (No further findings.)

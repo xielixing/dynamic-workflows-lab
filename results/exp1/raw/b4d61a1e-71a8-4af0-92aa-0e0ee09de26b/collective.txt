@@ -1,0 +1,111 @@
+Findings:
+
+1. **src/users/authService.ts**
+   - Line: 36
+   - Enclosing function: `assertCanManage`
+   - Offending call expression: `hasPermission(user, action)`
+   - Explanation: The returned `Promise<boolean>` is assigned to `allowed` without `await`; line 37's `if (!allowed)` then always sees a truthy Promise, so the ForbiddenError guard never fires — authorization can never be denied.
+
+2. **src/users/profileService.ts** — clean.
+
+3. **src/users/userService.ts** — clean.
+
+4. **src/reporting/auditTrail.ts** — clean. (`void db.events.insert(event).catch(...)` in `recordEvent` is the intentionally allowed fire-and-forget pattern.)
+
+5. **src/reporting/metricsAggregator.ts** — clean. (`isCacheFresh` result is properly awaited in `dailyOrderTotals`.)
+
+6. **src/reporting/salesReporter.ts** — clean.
+
+Files audited: 6, Issues found: 1
+
+=====
+
+## Audit results
+
+**1. src/notifications/emailService.ts** — Clean.
+
+**2. src/notifications/pushService.ts** — Clean.
+
+**3. src/notifications/digestBuilder.ts** — **Issue found**
+- File: `src/notifications/digestBuilder.ts`
+- Line: 21
+- Enclosing function: `buildDigestsFor`
+- Offending call: `hasDigestBeenSent(id)` (assigned to `const sent` without await)
+- Explanation: `sent` is a Promise (always truthy), so `if (!sent)` on line 22 is always false and no digest is ever sent; the duplicate-suppression guard is dead.
+
+**4. src/notifications/smsService.ts** — Clean.
+
+**5. src/orders/orderService.ts** — Clean.
+
+**6. src/orders/fulfillmentService.ts** — **Issue found**
+- File: `src/orders/fulfillmentService.ts`
+- Line: 26
+- Enclosing function: `fulfillOrder`
+- Offending call: `hasStock(item.sku, item.qty)` (assigned to `const ok` without await)
+- Explanation: `ok` is a Promise (always truthy), so `if (!ok)` on line 27 is always false and the `OutOfStockError` is never thrown — phantom shipments (WMS-77).
+
+**7. src/orders/returnsService.ts** — **Issue found**
+- File: `src/orders/returnsService.ts`
+- Line: 51
+- Enclosing function: `autoApproveIfEligible`
+- Offending call: `autoApprovalBlocked(orderId)` (assigned to `const blocked` without await)
+- Explanation: `blocked` is a Promise (always truthy), so `if (!blocked)` on line 52 is always false and no refund is ever auto-approved; the eligibility gate (FIN-31) is bypassed in the wrong direction (approvals silently never happen).
+
+---
+
+Files audited: 7, Issues found: 3
+
+=====
+
+## Audit findings
+
+### src/pricing/currencyRates.ts
+Clean. All calls (`fetchExchangeTable`, `convert`, `listSupportedCurrencies`) use `await`; no Promise used in a boolean context.
+
+### src/pricing/priceCalculator.ts
+Clean. `convert` and `db.products.all()` are all awaited; no Promise used in a boolean context.
+
+### src/pricing/discountEngine.ts
+Clean. `volumeDiscount` is synchronous; `bestPrice` has no un-awaited async calls.
+
+### src/pricing/promoCodes.ts
+Issue found:
+- File: src/pricing/promoCodes.ts
+- Line: 16
+- Enclosing function: `applyPromo`
+- Offending call expression: `promoIsStale(code)`
+- Explanation: result of async `promoIsStale(code)` (returns `Promise<boolean>`) is assigned to `stale` and then consumed by `if (!stale)` at line 17. Since a Promise is always truthy, `!stale` is always false, so the promo discount branch never executes and every apply is a silent no-op.
+
+### src/inventory/stockService.ts
+Clean. `stockLevels()` and `db.*` calls are all awaited; no Promise used in a boolean context.
+
+### src/inventory/reservationService.ts
+Issue found:
+- File: src/inventory/reservationService.ts
+- Line: 15
+- Enclosing function: `reserveForOrder`
+- Offending call expression: `hasActiveReservation(orderId)`
+- Explanation: result of async `hasActiveReservation(orderId)` (returns `Promise<boolean>`) is assigned to `already` and then consumed by `if (!already)` at line 16. The Promise is always truthy so `!already` is always false, the reservation is never inserted, and control falls into the branch reading `existing[0]` (undefined when the order has no rows) — breaking the documented idempotency contract (INV-118).
+
+### src/inventory/supplierSync.ts
+Clean. `sleep` and `db.products.all()` are awaited; the supplier catalog lookups are synchronous.
+
+---
+
+Files audited: 7, Issues found: 2
+
+=====
+
+All four files read.
+
+**src/index.ts** — clean. Every async-returning call (`db.orders.all()` line 15, `quoteCart(...)` line 18, `reserveForOrder(...)` line 20, `db.users.all()` line 24, `buildDigestsFor(...)` line 26, `dailyOrderTotals(...)` line 30) is preceded by `await`. The `if (paid)` on line 17 tests a synchronous `Array.prototype.find` result derived from an already-`await`ed value, not a Promise.
+
+**src/index.ts** — no issues found.
+
+**src/shared/db.ts** — no issues found. All `sleep(...)` calls (the only Promise-returning call in this file) are awaited inside every `Table` method (lines 26, 31, 36, 41, 46, 51, 57); none are used in a boolean context.
+
+**src/shared/logger.ts** — no issues found. Entirely synchronous, returns `void` via `emit`.
+
+**src/shared/types.ts** — no issues found. Pure type declarations, no executable code.
+
+Files audited: 4, Issues found: 0

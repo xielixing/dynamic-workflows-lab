@@ -1,0 +1,23 @@
+{
+  "exp": "exp2",
+  "arm": "nl",
+  "run": 3,
+  "startedAt": "2026-09-01T13:28:01.019Z",
+  "durationMs": 134612,
+  "exit": 0,
+  "sessionId": "76fb416c-c34e-4fbe-b636-5a46068d7ba1",
+  "testsGreen": true,
+  "testOutputTail": "\n\u001b[1m\u001b[46m RUN \u001b[49m\u001b[22m \u001b[36mv3.2.7 \u001b[39m\u001b[90mC:/codeagent/dynamic-workflows-lab/fixtures/exp2-fix\u001b[39m\n\n \u001b[32m✓\u001b[39m tests/dates.test.ts \u001b[2m(\u001b[22m\u001b[2m2 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 2\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m tests/money.test.ts \u001b[2m(\u001b[22m\u001b[2m2 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 2\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m tests/retry.test.ts \u001b[2m(\u001b[22m\u001b[2m2 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 3\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m tests/sorting.test.ts \u001b[2m(\u001b[22m\u001b[2m2 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 10\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m tests/refunds.test.ts \u001b[2m(\u001b[22m\u001b[2m2 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 2\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m tests/batching.test.ts \u001b[2m(\u001b[22m\u001b[2m2 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 3\u001b[2mms\u001b[22m\u001b[39m\n\n\u001b[2m Test Files \u001b[22m \u001b[1m\u001b[32m6 passed\u001b[39m\u001b[22m\u001b[90m (6)\u001b[39m\n\u001b[2m      Tests \u001b[22m \u001b[1m\u001b[32m12 passed\u001b[39m\u001b[22m\u001b[90m (12)\u001b[39m\n\u001b[2m   Start at \u001b[22m 21:30:19\n\u001b[2m   Duration \u001b[22m 409ms\u001b[2m (transform 253ms, setup 0ms, collect 385ms, tests 22ms, environment 1ms, prepare 654ms)\u001b[22m\n\n",
+  "tscClean": true,
+  "changedFiles": [
+    "src/config.ts",
+    "src/dates.ts",
+    "src/money.ts",
+    "src/refunds.ts",
+    "src/retry.ts",
+    "src/sorting.ts"
+  ],
+  "result": "Done. Both verification targets pass.\n\n## What was wrong\n\nThe repo was re-baselined with the same **6 planted bugs** (one per spec area), each guarded by a failing test. Six subagents diagnosed the failures in parallel and each traced a distinct root cause — all in `src/`:\n\n| File | Root cause | Fix (1 line) |\n|---|---|---|\n| `src/config.ts` | `BATCH_SIZE = 99` for ORD-88 | `99` → `100` |\n| `src/dates.ts` | `getUTCMonth()` renders zero-based months | `+ 1` |\n| `src/money.ts` | Discount not rounded to whole cents (FIN-19) | wrap in `Math.round(...)` |\n| `src/refunds.ts` | Object key `userId:` instead of `customerId:` (also the TS2353) | renamed the key |\n| `src/retry.ts` | Returns `undefined as T` after exhausting retries instead of surfacing the error (RET-7) | `throw lastError` |\n| `src/sorting.ts` | Comparator sorted by `id`, not newest-first by `createdAt` (OPS-12) | `b.createdAt.localeCompare(a.createdAt)` |\n\n## What I changed\n\nSix one-line edits, all under `src/`, confirmed by `git diff` — nothing under `tests/`, no assertions weakened, no signatures/APIs changed. `config.ts`'s own \"single source of truth\" rule was respected (the fix went into the config, not into the call site logic that was already correct).\n\n## Verification\n\n- `npm test` → **6 test files passed, 12/12 tests passed** (exit 0)\n- `npx tsc --noEmit` → **clean, exit 0** (TS2353 gone)\n\nThe parallel subagents' root-cause reports matched my independent read of the source exactly, and the fix set matches the durable pattern recorded in memory — so I appended a note that the fixture was re-baselined and re-fixed cleanly.",
+  "costUsd": 1.048847,
+  "stderr": ""
+}

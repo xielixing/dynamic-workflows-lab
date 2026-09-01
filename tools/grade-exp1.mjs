@@ -82,7 +82,7 @@ function metricsFor(report) {
 }
 
 function jaccard(a, b) {
-  const inter = a.filter((x) => b.has(x)).length
+  const inter = [...a].filter((x) => b.has(x)).length
   const union = new Set([...a, ...b]).size
   return union === 0 ? 1 : inter / union
 }

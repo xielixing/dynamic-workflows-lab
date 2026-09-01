@@ -1,0 +1,1 @@
+Sorting fix verified (src/sorting.ts comparator now keys on `createdAt` descending). Four agents still running: batching/config, dates, money, refunds.

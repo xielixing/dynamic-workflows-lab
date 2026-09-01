@@ -1,0 +1,13 @@
+{
+  "exp": "exp1",
+  "arm": "nl",
+  "run": 5,
+  "startedAt": "2026-09-01T12:59:30.459Z",
+  "durationMs": 203698,
+  "exit": 0,
+  "sessionId": "b4d61a1e-71a8-4af0-92aa-0e0ee09de26b",
+  "result": "Group 4 (shared/index) reported: **0 findings** — matches my read. One group left (pricing/inventory, 7 files, where 3 planted bugs should be).",
+  "isError": false,
+  "costUsd": 1.0530339999999998,
+  "stderr": ""
+}

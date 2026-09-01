@@ -1,0 +1,104 @@
+The test run confirms all 6 failures. Here is the structured diagnosis per area.
+
+---
+
+## 1. batching — `tests/batching.test.ts` / `src/batching.ts`, `src/config.ts`
+
+**Test expectation:** Splitting 250 ids yields chunk lengths `[100, 100, 50]` and `overflow === 50` (ORD-88: chunks of exactly 100). Second test (original order preserved) already passes.
+
+**Root cause:** Wrong constant value, not an algorithm bug. `src/config.ts:6` sets `BATCH_SIZE = 99`, so the loop slices `[99, 99, 52]`. The loop/`slice` logic in `batchIds` is correct; the spec comment in both files says 100, and the test uses the value from config as single source of truth — the constant is wrong and the call site is fine.
+
+**Minimal fix** (in `src/config.ts` only):
+```ts
+// line 6
+export const BATCH_SIZE = 100
+```
+
+---
+
+## 2. dates — `tests/dates.test.ts` / `src/dates.ts`
+
+**Test expectation:** `shortDate('2026-03-08T12:00:00Z')` → `'2026-03-08'` (1-based month), plus a padding check that passes.
+
+**Root cause:** Wrong algorithm line — missing the `+ 1` for the 0-based UTC month. `d.getUTCMonth()` returns `2` for March; line 9 formats it without adjustment, producing `'2026-02-08'`.
+
+**Minimal fix** (in `src/dates.ts`):
+```ts
+// line 9: add 1 to the 0-based UTC month before padding
+return `${y}-${String(m + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+```
+
+---
+
+## 3. money — `tests/money.test.ts` / `src/money.ts`
+
+**Test expectation:** `applyDiscountCents(1999, 15)` → `1699`, `(1000, 10)` → `900`, `(333, 50)` → `167` — i.e. discount result rounded to whole cents, half-up.
+
+**Root cause:** Wrong algorithm line — the rounding step is missing. Line 3 returns the raw float `1699.15` etc. (For `333, 50`: `333 - 166.5 = 166.5`, `Math.round` → `167`, which is exactly the half-up case the test checks.)
+
+**Minimal fix** (in `src/money.ts`):
+```ts
+// line 3: round the final money amount to whole cents (Math.round is half-up for positives)
+return Math.round(cents - (cents * percentOff) / 100)
+```
+
+---
+
+## 4. refunds — `tests/refunds.test.ts` / `src/refunds.ts`
+
+**Test expectation:** `createRefund` produces a `RefundRequest` whose `customerId === 'c-42'`; `refundSummary` contains `'c-42'` and starts with `'rf-o-77-2500: $25.00'`.
+
+**Root cause:** Swapped property name — wrong key in the created object. `src/refunds.ts:7` writes `userId: order.customerId`, but `RefundRequest` (in `src/types.ts`) declares `customerId`, not `userId` (matching `Order.customerId`). At runtime `refund.customerId` is `undefined`, so line 15 (`refundSummary`'s template using `refund.customerId`) renders `"for customer undefined"`. The `refundSummary` template string itself is correct once the object is built with the right key, so no change is needed there.
+
+**Minimal fix** (in `src/refunds.ts`):
+```ts
+// line 7
+customerId: order.customerId,
+```
+
+**TS compile error impact:** This is the one reported compile error — `src/refunds.ts(7,5): error TS2353 — 'userId' does not exist in type 'RefundRequest'`. The fix above resolves it (afterwards `createRefund` returns a well-typed `RefundRequest`, and the only remaining `userId` references are gone).
+
+---
+
+## 5. retry — `tests/retry.test.ts` / `src/retry.ts`
+
+**Test expectation:** After all attempts fail, `withRetry` `rejects` with the last error (`'boom 3'`), and `calls === 3`. Success path already passes.
+
+**Root cause:** Wrong algorithm line — `src/retry.ts:14` returns `undefined as T` after the loop instead of surfacing the failure. This is the exact "silent failure" behavior the RET-7 spec comment says caused the 2026-06-19 incident. (`lastError` is captured correctly in the catch block.)
+
+**Minimal fix** (in `src/retry.ts`):
+```ts
+// line 14: replace the silent success with a throw of the last captured error
+throw lastError
+```
+(`throw` in a `Promise<T>` async function rejects; the loop-count behavior is unchanged. Alternatively `return Promise.reject(lastError)`, but `throw lastError` is the idiomatic fix.)
+
+---
+
+## 6. sorting — `tests/sorting.test.ts` / `src/sorting.ts`
+
+**Test expectation:** `newestFirst` returns orders newest first by `createdAt`: `['o-2', 'o-3', 'o-1']`, without mutating the input (second test passes).
+
+**Root cause:** Wrong algorithm line / wrong comparator — `src/sorting.ts:8` sorts by `a.id.localeCompare(b.id)` (ascending by id), not by `createdAt` descending. Note the id order `o-1, o-2, o-3` is the same as nothing-changed, so the comparator is simply comparing the wrong field/order.
+
+**Minimal fix** (in `src/sorting.ts`):
+```ts
+// line 8: sort newest first by createdAt (ISO-8601 strings compare correctly lexicographically)
+return [...orders].sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+```
+(The spread already protects against mutation; only the comparator changes.)
+
+---
+
+## Summary of failing areas
+
+| Area | Bug type | File:line | Fix |
+|---|---|---|---|
+| batching | wrong constant | `src/config.ts:6` | `BATCH_SIZE = 99` → `100` |
+| dates | wrong algorithm (missing +1) | `src/dates.ts:9` | `m` → `m + 1` |
+| money | wrong algorithm (missing rounding) | `src/money.ts:3` | wrap in `Math.round(...)` |
+| refunds | swapped property name | `src/refunds.ts:7` | `userId` → `customerId` |
+| retry | wrong algorithm (resolves instead of rejects) | `src/retry.ts:14` | `return undefined as T` → `throw lastError` |
+| sorting | wrong comparator (field/order) | `src/sorting.ts:8` | sort by `b.createdAt.localeCompare(a.createdAt)` |
+
+The single TS compile error is only in refunds.ts(7,5), and the `userId` → `customerId` fix resolves it. All 6 fixes are one-line changes confined to `src/` files; the `refundSummary` template string and `batchIds` algorithm are already correct.

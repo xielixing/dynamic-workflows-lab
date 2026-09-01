@@ -1,0 +1,1 @@
+The workflow is running in the background — I'll wait for the completion notification with the round-1 results, then run the full gate (`npm test` + `npx tsc --noEmit`) before deciding whether another round is needed.

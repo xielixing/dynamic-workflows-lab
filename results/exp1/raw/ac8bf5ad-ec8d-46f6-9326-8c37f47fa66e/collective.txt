@@ -1,0 +1,450 @@
+src\users\profileService.ts:25:  if (!/^[^@]+@[^@]+\.[^@]+$/.test(email)) {
+src\notifications\smsService.ts:14:  if (OPT_OUTS.has(userId)) {
+src\pricing\currencyRates.ts:19:  if (Math.random() < 0.15) {
+
+=====
+
+src\users\authService.ts:5:const log = makeLogger('users:auth')
+src\users\authService.ts:36:  const allowed = hasPermission(user, action)
+src\notifications\digestBuilder.ts:5:const log = makeLogger('notify:digest')
+src\notifications\digestBuilder.ts:21:    const sent = hasDigestBeenSent(id)
+src\inventory\reservationService.ts:15:  const already = hasActiveReservation(orderId)
+src\reporting\metricsAggregator.ts:10:  const built = cacheStamp.get(key)
+src\orders\returnsService.ts:51:  const blocked = autoApprovalBlocked(orderId)
+src\inventory\supplierSync.ts:5:const log = makeLogger('inventory:supplier')
+src\inventory\stockService.ts:4:const log = makeLogger('inventory:stock')
+src\reporting\salesReporter.ts:13:    const day = o.createdAt.slice(0, 10)
+src\notifications\smsService.ts:4:const log = makeLogger('notify:sms')
+src\pricing\promoCodes.ts:16:  const stale = promoIsStale(code)
+src\pricing\promoCodes.ts:29:  const expiry = promo.expiresAt.slice(0, 10)
+src\notifications\emailService.ts:4:const log = makeLogger('notify:email')
+src\notifications\pushService.ts:4:const log = makeLogger('notify:push')
+src\orders\fulfillmentService.ts:5:const log = makeLogger('orders:fulfillment')
+src\orders\fulfillmentService.ts:26:    const ok = hasStock(item.sku, item.qty)
+src\pricing\discountEngine.ts:22:  const base = subtotalCents(items)
+src\pricing\discountEngine.ts:27:  const discounted = volumeDiscount(items)
+src\pricing\currencyRates.ts:4:const log = makeLogger('pricing:rates')
+src\pricing\priceCalculator.ts:16:  const sub = subtotalCents(items)
+
+=====
+
+src\users\userService.ts:4:export async function getUser(id: string): Promise<User | null> {
+src\users\userService.ts:8:export async function activeCustomers(): Promise<User[]> {
+src\users\userService.ts:12:export async function deactivateUser(id: string, reason: string): Promise<void> {
+src\users\userService.ts:21:export async function roleDistribution(): Promise<Record<string, number>> {
+src\users\profileService.ts:4:export async function profileFor(userId: string): Promise<ProfileView | null> {
+src\users\profileService.ts:24:export async function updateEmail(userId: string, email: string): Promise<void> {
+src\users\profileService.ts:31:export async function mergeAccounts(primaryId: string, duplicateId: string): Promise<User> {
+src\index.ts:12:export async function runPipelineSmoke(): Promise<string[]> {
+src\users\authService.ts:21:async function loadPermissionMatrix(): Promise<Record<string, string[]>> {
+src\users\authService.ts:26:async function hasPermission(user: User, action: string): Promise<boolean> {
+src\users\authService.ts:35:export async function assertCanManage(user: User, action: string): Promise<void> {
+src\users\authService.ts:44:async function recordAccess(userId: string, action: string): Promise<void> {
+src\inventory\supplierSync.ts:21:export async function lookupLeadTime(sku: string): Promise<number> {
+src\inventory\supplierSync.ts:27:export async function suggestRestock(): Promise<Array<{ sku: string; cases: number }>> {
+src\inventory\supplierSync.ts:43:export async function syncPricesFromSupplier(): Promise<number> {
+src\reporting\salesReporter.ts:21:export async function salesRows(): Promise<SalesRow[]> {
+src\reporting\salesReporter.ts:34:export async function topDay(): Promise<SalesRow | null> {
+src\notifications\smsService.ts:8:export async function optOut(userId: string): Promise<void> {
+src\notifications\smsService.ts:13:export async function sendSms(userId: string, text: string): Promise<boolean> {
+src\notifications\smsService.ts:23:export async function shipNotice(userId: string, tracking: string): Promise<void> {
+src\notifications\smsService.ts:27:export async function optOutCount(): Promise<number> {
+src\orders\returnsService.ts:6:export async function openRefund(orderId: string, reason: string): Promise<RefundRequest> {
+src\orders\returnsService.ts:22:export async function approveRefund(refundId: string, approverRole: string): Promise<void> {
+src\orders\returnsService.ts:29:export async function refundWithinWindow(orderId: string): Promise<boolean> {
+src\orders\returnsService.ts:36:async function autoApprovalBlocked(orderId: string): Promise<boolean> {
+src\orders\returnsService.ts:50:export async function autoApproveIfEligible(orderId: string): Promise<boolean> {
+src\orders\returnsService.ts:62:export async function pendingRefundCount(): Promise<number> {
+src\reporting\auditTrail.ts:21:export async function eventsFor(actor: string): Promise<AuditEvent[]> {
+src\reporting\auditTrail.ts:25:export async function recentActions(limit = 20): Promise<AuditEvent[]> {
+src\reporting\auditTrail.ts:30:export async function countByAction(): Promise<Record<string, number>> {
+src\orders\fulfillmentService.ts:14:async function hasStock(sku: string, qty: number): Promise<boolean> {
+src\orders\fulfillmentService.ts:24:export async function fulfillOrder(order: Order): Promise<Shipment> {
+src\shared\db.ts:12:export const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms))
+src\shared\db.ts:16: * Every method is async on purpose: in production these go over the wire,
+src\shared\db.ts:25:  async find(id: string): Promise<T | null> {
+src\shared\db.ts:30:  async all(): Promise<T[]> {
+src\shared\db.ts:35:  async where(pred: (row: T) => boolean): Promise<T[]> {
+src\shared\db.ts:40:  async count(pred?: (row: T) => boolean): Promise<number> {
+src\shared\db.ts:45:  async insert(row: T): Promise<void> {
+src\shared\db.ts:50:  async update(id: string, patch: Partial<T>): Promise<void> {
+src\shared\db.ts:56:  async delete(id: string): Promise<void> {
+src\inventory\stockService.ts:12:export async function stockLevels(): Promise<StockLevel[]> {
+src\inventory\stockService.ts:22:export async function lowStockReport(threshold = 10): Promise<string[]> {
+src\inventory\stockService.ts:31:export async function totalUnitsOnHand(): Promise<number> {
+src\reporting\metricsAggregator.ts:9:async function isCacheFresh(key: string): Promise<boolean> {
+src\reporting\metricsAggregator.ts:24:export async function dailyOrderTotals(day: string, currency = 'USD'): Promise<number[]> {
+src\reporting\metricsAggregator.ts:40:export async function invalidate(day?: string): Promise<void> {
+src\notifications\pushService.ts:17:export async function tokenFor(userId: string): Promise<PushToken | null> {
+src\notifications\pushService.ts:22:export async function pushOrderUpdate(userId: string, orderId: string): Promise<boolean> {
+src\notifications\pushService.ts:33:export async function broadcastMaintenance(atIso: string): Promise<void> {
+src\orders\orderService.ts:5:export async function getOrder(id: string): Promise<Order | null> {
+src\orders\orderService.ts:9:export async function ordersForUser(userId: string): Promise<Order[]> {
+src\orders\orderService.ts:14:export async function createOrder(userId: string, wanted: Array<{ sku: string; qty: number }>): Promise<Order> {
+src\orders\orderService.ts:33:export async function markPaid(orderId: string): Promise<void> {
+src\orders\orderService.ts:37:export async function cancelOrder(orderId: string, reason: string): Promise<void> {
+src\inventory\reservationService.ts:4:async function hasActiveReservation(orderId: string): Promise<boolean> {
+src\inventory\reservationService.ts:14:export async function reserveForOrder(orderId: string, sku: string, qty: number): Promise<Reservation> {
+src\inventory\reservationService.ts:31:export async function releaseReservation(orderId: string): Promise<number> {
+src\pricing\promoCodes.ts:4:async function promoIsStale(code: string): Promise<boolean> {
+src\pricing\promoCodes.ts:15:export async function applyPromo(code: string, totalCents: number): Promise<number> {
+src\pricing\promoCodes.ts:26:export async function describePromo(code: string): Promise<string> {
+src\pricing\discountEngine.ts:26:export async function bestPrice(items: OrderItem[], currency = 'USD'): Promise<DiscountResult> {
+src\pricing\currencyRates.ts:17:export async function fetchExchangeTable(): Promise<Record<string, number>> {
+src\pricing\currencyRates.ts:26:export async function convert(amountUSD: number, target: string): Promise<number> {
+src\pricing\currencyRates.ts:35:export async function listSupportedCurrencies(): Promise<string[]> {
+src\pricing\priceCalculator.ts:15:export async function quoteCart(items: OrderItem[], currency = 'USD'): Promise<Quote> {
+src\pricing\priceCalculator.ts:25:export async function priceOfSku(sku: string): Promise<number> {
+src\pricing\priceCalculator.ts:34:export async function cheapestSku(): Promise<string | null> {
+src\notifications\digestBuilder.ts:7:async function hasDigestBeenSent(userId: string): Promise<boolean> {
+src\notifications\digestBuilder.ts:18:export async function buildDigestsFor(userIds: string[]): Promise<string[]> {
+src\notifications\digestBuilder.ts:39:async function composeDigest(userId: string): Promise<string> {
+src\notifications\emailService.ts:15:export async function stageEmail(to: string, subject: string, body: string): Promise<void> {
+src\notifications\emailService.ts:20:export async function drainOutbox(): Promise<number> {
+src\notifications\emailService.ts:30:export async function orderConfirmation(to: string, orderId: string, totalCents: number): Promise<void> {
+src\notifications\emailService.ts:35:export async function outboxSize(): Promise<number> {
+
+=====
+
+src\users\userService.ts:9:  return db.users.where((u) => u.role === 'customer' && u.active)
+src\shared\logger.ts:6:    console.error(line, extra ?? '')
+src\shared\logger.ts:8:    console.log(line, extra ?? '')
+src\reporting\salesReporter.ts:37:  return rows.reduce((a, b) => (a.revenueCents >= b.revenueCents ? a : b))
+src\orders\returnsService.ts:53:    const pending = await db.refunds.where((r) => r.orderId === orderId && !r.approved)
+src\pricing\priceCalculator.ts:37:  const cheapest = products.reduce((a, b) => (a.priceCents <= b.priceCents ? a : b))
+src\reporting\metricsAggregator.ts:40:export async function invalidate(day?: string): Promise<void> {
+src\reporting\metricsAggregator.ts:43:    const key = [...cacheStamp.keys()].find((k) => k.startsWith(`${day}|`))
+src\notifications\digestBuilder.ts:5:const log = makeLogger('notify:digest')
+src\notifications\emailService.ts:4:const log = makeLogger('notify:email')
+src\notifications\pushService.ts:4:const log = makeLogger('notify:push')
+src\notifications\smsService.ts:4:const log = makeLogger('notify:sms')
+
+=====
+
+Read the file and confirmed the `sleep` imported function is promise-returning. I enumerated every async/promise-returning function relevant to the file:
+
+- `sleep` (imported, defined as `(ms) => new Promise(...)` at `src/shared/db.ts:12`)
+- `stageEmail` (async, file line 15)
+- `drainOutbox` (async, line 20)
+- `orderConfirmation` (async, line 30)
+- `outboxSize` (async, line 35)
+
+Call-site audit — where each promise's return value goes:
+- `await sleep(2)` (line 16) — awaited.
+- `await sleep(3)` (line 24) — awaited.
+- `await stageEmail(...)` (line 32) — awaited.
+- `await sleep(1)` (line 36) — awaited.
+
+There are no boolean contexts in this file at all: no `if`, `else if`, `while`, `!`, ternary, or `&&`/`||` chains. Every promise is either awaited or deliberately returned. No match for the pattern.
+
+
+
+=====
+
+Every async-related construct in this file is properly handled:
+
+- `tokenFor` (line 17): `await sleep(2)` at line 18 is awaited; returns the concrete result.
+- `pushOrderUpdate` (line 22): `await tokenFor(userId)` at line 23 is awaited; `if (!target)` at line 24 tests a previously-awaited concrete value; `await sleep(3)` at line 28 is awaited.
+- `broadcastMaintenance` (line 33): `await sleep(1)` at line 35 is awaited.
+- `makeLogger` is a sync function returning a logger; `log.info(...)` calls are bare statement calls, not boolean contexts.
+
+No promise-returning call appears in any `if`/`while`/ternary/`&&`/`||` condition, directly after `!`, stored without await, or otherwise consumed as a boolean. No un-awaited promises exist in the file
+
+=====
+
+The file contains only two sync functions: `emit` (returns `void` directly) and `makeLogger` (returns an object whose methods synchronously call `emit`). There are no async functions, no imports, no Promise-constructing code, and no boolean contexts. Nothing matches the bug pattern.
+
+
+
+=====
+
+The file under audit is `src/pricing/discountEngine.ts` (31 lines, read in full).
+
+Analysis:
+
+**Async/promise-returning functions in play:**
+- `bestPrice` is declared `async` → returns `Promise<DiscountResult>` (line 26).
+- `volumeDiscount` is a sync function returning a `DiscountResult` value (line 16-24).
+
+**Imported functions used:**
+- `subtotalCents` from `./priceCalculator` — verified a sync function (`export function subtotalCents(items: OrderItem[]): number`, line 11 of `priceCalculator.ts`); returns a concrete number, not a Promise. Called at lines 20 and 22 in value context.
+
+**Every call site checked for the boolean-context-without-await pattern:**
+- Line 20: `subtotalCents(items)` — sync, value context. Out of scope (not promise-returning).
+- Line 22: `subtotalCents(items)` — sync, key position of an object literal. Out of scope.
+- Line 27: `volumeDiscount(items)` — sync, result assigned to `discounted` then used as object values. Out of scope.
+- `bestPrice` calls no async function internally (the `async` keyword is unused); no `if`/`while`/ternary/`&&`/`||`/`!` guard involves any Promise value anywhere in the file.
+
+No call in this file consumes a Promise in a boolean position without `await`. The file is clean
+
+=====
+
+The audit is complete. I read the file in full and enumerated all async/promise-returning functions.
+
+**Async/promise-returning functions relevant to this file:**
+- `quoteCart` (async, line 15), `priceOfSku` (async, line 25), `cheapestSku` (async, line 34) — declared here, but never called from within this file.
+- `convert` (imported, confirmed `export async function convert(...): Promise<number>` in `src/pricing/currencyRates.ts`) — its only call site is line 21, which is properly awaited.
+- `db.products.all()` (lines 26, 35) — awaited at both sites.
+
+**Call-by-call check for un-awaited promises in boolean contexts:**
+- Line 16 `subtotalCents(items)` — sync function, not a Promise.
+- Line 21 `await convert(...)` — awaited.
+- Line 28 `if (!product)` — `product` is the sync result of `products.find(...)`, not a Promise.
+- Line 36 `if (products.length === 0)` — sync check on a length, not a Promise.
+
+No call to an async/promise-returning function is consumed in an `if`/`while`/ternary/`!`/`&&`/`||` position without `await`. No `const r = f()` stored-then-used-as-boolean pattern exists either. The file is clean for this pattern.
+
+
+
+=====
+
+All six findings verified against source. All CONFIRMED.
+
+# Consolidated Audit Report — Un-awaited Promise in Boolean Context
+
+**Summary:** 6 files audited, 6 files with confirmed findings, 6 total findings, 6 confirmed, 0 false positives.
+
+All six cases share the identical defect shape: an `async` helper returning `Promise<boolean>` whose result is stored in a `const` without `await` and consumed by an `if (!x)` guard. A Promise object is always truthy, so `!x` is always `false`, the guarded branch is permanently dead, and `await` after the `const` no longer helps — the await must be placed on the call itself.
+
+## src/inventory/reservationService.ts
+- **`reservationService.ts:15`** in `reserveForOrder` — `hasActiveReservation(orderId)` — `hasActiveReservation` is `async` (line 4), but `const already = hasActiveReservation(orderId)` stores a `Promise<boolean>` un-awaited and `if (!already)` (line 16) is therefore always false, making the reservation-insert branch dead: the second call hits `existing[0]` which is `undefined` for a first-time order, breaking the INV-118 idempotency contract and the `Promise<Reservation>` return type. Fix: `const already = await hasActiveReservation(orderId)`.
+
+## src/notifications/digestBuilder.ts
+- **`digestBuilder.ts:21`** in `buildDigestsFor` — `hasDigestBeenSent(id)` — the `async` `hasDigestBeenSent` is called without `await`, so `if (!sent)` (line 22) never fires; the digest-compose/insert branch is dead and *every* user, including those who already received one, gets a digest, silently inverting the CRM-204 duplicate-suppression intent. Fix: `const sent = await hasDigestBeenSent(id)`.
+
+## src/orders/fulfillmentService.ts
+- **`fulfillmentService.ts:26`** in `fulfillOrder` — `hasStock(item.sku, item.qty)` — `async hasStock`'s promise is stored un-awaited in `ok`, so `if (!ok)` (line 27) never throws `OutOfStockError` and shipments are created for out-of-stock items — the exact WMS-77 phantom-shipment scenario. Fix: `const ok = await hasStock(item.sku, item.qty)`.
+
+## src/orders/returnsService.ts
+- **`returnsService.ts:51`** in `autoApproveIfEligible` — `autoApprovalBlocked(orderId)` — the `async` `autoApprovalBlocked` is called without `await`, so `if (!blocked)` (line 52) is always false: the refund auto-approval branch is dead and `autoApproveIfEligible` always returns `false`, silently defeating the FIN-31 finance gate. Fix: `const blocked = await autoApprovalBlocked(orderId)`.
+
+## src/pricing/promoCodes.ts
+- **`promoCodes.ts:16`** in `applyPromo` — `promoIsStale(code)` — `async promoIsStale` is called un-awaited (call is line 16; the guard `if (!stale)` is the finding's cited line 17), so the discount branch is dead and `applyPromo` always returns the unchanged `totalCents`, silently negating the FIN-27 expired-promo gate. Fix: `const stale = await promoIsStale(code)`.
+
+## src/users/authService.ts
+- **`authService.ts:36`** in `assertCanManage` — `hasPermission(user, action)` — the `async hasPermission` promise is stored un-awaited in `allowed`, so `if (!allowed)` (line 37) is always false: `ForbiddenError` is never thrown and the SEC-12 authorization denial path is permanently dead. Fix: `const allowed = await hasPermission(user, action)`.
+
+## False positives
+None — every finding was verified against source and all legal-pattern exclusions (`void`, `.catch()`/`.then()`, async `return`, direct `await`) were checked as absent.
+
+=====
+
+I've completed the audit of `src/orders/orderService.ts`. Let me enumerate every async call site and its context:
+
+**Async-call inventory for this file:**
+
+- Line 6: `return db.orders.find(id)` — returned from an async function (deliberate), not a boolean context.
+- Line 10: `await db.orders.all()` — awaited.
+- Line 17: `await priceOfSku(line.sku)` — awaited (confirmed `priceOfSku` is `async` in `src/pricing/priceCalculator.ts:25`).
+- Line 29: `await db.orders.insert(order)` — awaited.
+- Line 34: `await db.orders.update(orderId, { status: 'paid' })` — awaited.
+- Line 38: `await db.orders.find(orderId)` — awaited.
+- Line 43: `await db.orders.update(orderId, { status: 'cancelled' })` — awaited.
+
+**Boolean contexts examined:**
+- Line 39: `if (!order) return` — `order` was already awaited on line 38, so this is a legit value check, not the bug.
+- Line 40: `order.status === 'shipped' || order.status === 'delivered'` — the `||` chain is over sync string comparisons on the awaited `order` object, not over a Promise.
+- Line 11: `.filter((o) => o.userId === userId)` — sync predicate.
+- Line 20: `.reduce(...)` — sync.
+
+Every async call in this file is either `await`ed or returned. No call consumes a Promise directly in an `if`/`while`/ternary/`!`/`&&`/`||` boolean position. The file is clean
+
+=====
+
+I've read the file fully and cross-checked the imported async source (`src/shared/db.ts`, where `db.products.all()` / `db.reservations.all()` are confirmed `async all(): Promise<T[]>`).
+
+Analysis of every async/promise-returning call in `src/inventory/stockService.ts`:
+
+- Line 13: `await Promise.all([db.products.all(), db.reservations.all()])` — awaited, result used via destructuring. Clean.
+- Line 22-23: `const levels = await stockLevels()` — awaited before any use. Clean.
+- Line 25: `if (low.length > 0)` — `low` is a plain array derived from the already-awaited `levels`; the condition is a sync comparison. Clean.
+- Line 32: `const products = await db.products.all()` — awaited. Clean.
+- Line 24/28: `levels.filter(...)` and `low.map(...)` — pure array methods. Clean.
+
+There is no call to an async function whose Promise result is used in a boolean context without `await`. No `if (asyncCall())`, no `if (!asyncCall())`, no ternary-condition, no `&&`/`||` chain in boolean position of a promise. The file is clean.
+
+
+
+=====
+
+The audit is complete. I verified every async call site in the file:
+
+- Line 5: `await db.users.find(...)` — awaited
+- Line 7: `await db.orders.all()` — awaited
+- Line 28: `await db.users.update(...)` — awaited
+- Line 32: `await Promise.all(...)` — awaited
+- Line 38: `await db.orders.update(...)` — awaited
+- Line 40: `await db.users.delete(...)` — awaited
+
+The only boolean-context conditions (`if (!user)` line 6, `if (!primary || !duplicate)` line 33) test values that were already awaited (`user` from line 5, `primary`/`duplicate` from line 32). The filter callbacks (`orders.filter(...)` on lines 8 and 37) are synchronous predicates, not promise-returning. No unawaited Promise is consumed in any boolean context. The file is clean.
+
+
+
+=====
+
+I have read the file in full. Let me verify against the bug pattern:
+
+The file contains 4 async functions: `getUser` (line 4), `activeCustomers` (line 8), `deactivateUser` (line 12), and `roleDistribution` (line 21). Now I'll enumerate every call to an async/promise-returning function:
+
+- Line 5: `return db.users.find(id)` — inside an async function, deliberately returned for the caller. Legal.
+- Line 9: `return db.users.where(...)` — inside an async function, deliberately returned. Legal.
+- Line 13: `await db.users.find(id)` — properly awaited.
+- Line 18: `await db.users.update(id, ...)` — properly awaited.
+- Line 14: `if (!user)` — `user` was already awaited on line 13. Legal.
+- Line 15: `if (user.role === 'admin')` — sync boolean check on a concrete value. Out of scope.
+
+There are no calls to async or promise-returning functions in any boolean context (`if`/`else if`/`while` condition, negation, ternary condition, or `&&`/`||` chain) without `await`. No `const r = f()` stored-then-boolean-checked pattern exists either. The file is clean
+
+=====
+
+Analysis complete. I read `src/orders/returnsService.ts` in full and confirmed the async contract of `db`'s methods in `src/shared/db.ts` (all `find`/`insert`/`update`/`where` are `async`).
+
+Enumeration of async/promise-returning calls in the file:
+- Line 7, 18, 26, 30, 39, 53, 55, 63 — all properly `await`ed.
+- Line 51 — the bug: `const blocked = autoApprovalBlocked(orderId)` stores an un-awaited `Promise<boolean>` (enclosing fn `autoApprovalBlocked` is `async`), then line 52 uses it in `if (!blocked)`. A Promise is always truthy, so `!blocked` is always `false`, the auto-approval branch is dead, and `autoApproveIfEligible` unconditionally returns `false`. Missing `await` on line 51.
+
+No other poisonaged guards exist
+
+=====
+
+I have read `src/index.ts` in full and verified the promise-returning nature of every relevant imported function via `src/pricing/priceCalculator.ts`, `src/inventory/reservationService.ts`, `src/orders/fulfillmentService.ts`, `src/notifications/digestBuilder.ts`, `src/reporting/metricsAggregator.ts`, and `src/shared/db.ts`.
+
+Audit of every async call in `src/index.ts`:
+
+- Line 15: `await db.orders.all()` — awaited.
+- Line 18: `const quote = await quoteCart(paid.items)` — awaited.
+- Line 20: `await reserveForOrder(...)` — awaited.
+- Line 24: `await db.users.all()` — awaited.
+- Line 26: `const digests = await buildDigestsFor(digestIds)` — awaited.
+- Line 30: `const totals = await dailyOrderTotals(today)` — awaited.
+- Line 17: `if (paid)` — `paid` is the result of the sync `.find()`, already a concrete value, not a Promise.
+- Line 36: re-export of `fulfillOrder` et al. — declarations, not calls.
+
+All Promise-producing calls are awaited; there are no boolean-context consumers of an un-awaited Promise. The file is clean.
+
+
+
+=====
+
+I've read the file. Let me verify the async functions involved:
+- `hasPermission` (line 26): declared `async`, returns `Promise<boolean>`
+- `loadPermissionMatrix` (line 21): declared `async`, awaited at line 27 — fine
+- `recordAccess` (line 44): declared `async`, awaited at line 41 — fine
+- `db.events.insert` (db.ts line 45): async, awaited at line 50 — fine
+- `sleep` (db.ts line 12): returns a Promise, awaited at line 22 — fine
+
+The one bug: line 36 in `assertCanManage`.
+
+
+
+=====
+
+The single regex hit is just the string literal `'awaiting_stock'` in a union type — not an async call. The file has no functions, no imports, no calls, and no boolean contexts. Nothing to audit
+
+=====
+
+Audit complete. The file `src/pricing/promoCodes.ts` contains one genuine match of the bug pattern.
+
+Confirmed facts from the audit:
+- `promoIsStale` (line 4) is `async`, returning `Promise<boolean>`.
+- `db.promos.find` is confirmed async in `src/shared/db.ts` (line 25: `async find(id): Promise<T | null>`), and its call sites in this file are properly awaited (lines 5, 18, 27).
+- The bug: line 16 `const stale = promoIsStale(code)` stores an un-awaited `Promise<boolean>`, then line 17 `if (!stale)` tests that Promise in a boolean context. A Promise is always truthy, so `!stale` is always `false`; the discount branch (lines 18-21) is permanently dead, and `applyPromo` silently always returns the original `totalCents
+
+=====
+
+The audit file is clean structurally except this one issue. Analysis:
+
+Relevant promise-returning functions: `hasActiveReservation` (declared `async` in-file), plus `db.reservations.*` (all awaited at call sites: lines 5, 24, 27, 32, 34).
+
+Line 15 calls `hasActiveReservation(orderId)` WITHOUT `await` and stores the Promise in `already`; line 16 consumes it in a boolean guard `if (!already)`. A Promise is always truthy, so `!already` is always `false` — the idempotent-creation branch is permanently dead, breaking the documented idempotency contract (duplicate rows possible), and `existing[0]` (line 28) can be `undefined` against a `Promise<Reservation>` return type.
+
+
+
+=====
+
+I've read the file in full and confirmed the relevant async functions. Let me analyze every async/promise-returning call in `src/reporting/auditTrail.ts`:
+
+**Async-relevant functions and their call sites:**
+
+1. **`db.events.insert(event)` (line 16)** — imported from `db.ts`, confirmed `async insert` (returns `Promise<void>`). Used as `void db.events.insert(event).catch(...)` — explicitly `void`'d and chained with `.catch()`. Fire-and-forget, deliberately discarded, legal.
+2. **`db.events.where(...)` (line 22)** — confirmed `async where` (returns `Promise<T[]>`). Used as `return db.events.where(...)` from inside the `async` function `eventsFor`. `return someAsync()` from an async function is explicitly legal.
+3. **`db.events.all()` (lines 26, 31)** — confirmed `async all` (returns `Promise<T[]>`). Both call sites are `await db.events.all()`. Properly awaited; legal.
+
+**Boolean-context scan:** The file has no `if`/`while`/ternary/`&&`/`||`/`!` guards applied to any value at all, let alone a promise. No value is stored from an async call without awaiting (`const r = f(); if (r)`) either. Every async call site either awaits, returns from an async function, or is intentionally discarded via `void` + `.catch()` chaining.
+
+The file is clean for this bug pattern.
+
+
+
+=====
+
+I've read the file in full (39 lines). Let me enumerate all async/promise-returning function calls and their usage:
+
+1. **Line 22**: `db.orders.all()` — called with `await`, result assigned to `orders`. Properly awaited.
+2. **Line 35**: `salesRows()` — called with `await`, result assigned to `rows`. Properly awaited.
+3. **Line 36**: `if (rows.length === 0)` — `rows` is the already-awaited result; the condition is a numeric comparison, not a Promise.
+4. **Line 37**: ternary `a.revenueCents >= b.revenueCents` — comparison of numbers inside `reduce`, not a Promise.
+
+Declared async functions in the file: `salesRows()` (line 21) and `topDay()` (line 34). Their only cross-references are the awaited call at line 35. `bucketByDay` (line 10) is sync (returns a `Map`).
+
+No call to an async/promise-returning function has its result consumed in a boolean context without `await`. The file is clean for this bug pattern.
+
+
+
+=====
+
+I've read the file in full. Let me enumerate the async/promise-returning functions and check every call site against the bug pattern.
+
+Async/promise-returning functions in `src/shared/db.ts`:
+- `sleep` (line 12) — returns `new Promise<void>`
+- `Table.find` (line 25), `Table.all` (line 30), `Table.where` (line 35), `Table.count` (line 40), `Table.insert` (line 45), `Table.update` (line 50), `Table.delete` (line 56) — all `async`
+
+Call sites within the file:
+- `sleep(...)` is called at lines 26, 31, 36, 41, 46, 51, 57 — every one is `await sleep(...)`, correctly awaited.
+- There are no calls to the `Table` methods (or any other async function) inside boolean contexts (`if`/`else if`/`while`/`!`/ternary/`&&`/`||`) anywhere in this file.
+- No `return someAsync()` propagations and no stored-then-tested promise values.
+- Seed data and the `db` object are synchronous.
+
+The file is clean.
+
+
+
+=====
+
+The file is fully analyzed. Underscore enumeration:
+
+- `sleep` (imported from `../shared/db`, line 12 of db.ts) is `new Promise` — confirmed async. All three call sites (lines 9, 18, 28) use `await` — fine.
+- `sendSms` (declared async at line 13) is only called at line 24, inside `await sendSms(...)` — fine.
+- `optOut`, `optOutCount` (async, lines 8, 27) — declared only, not called in this file.
+- The only boolean guard is line 14's `if (OPT_OUTS.has(userId))` — `Set.prototype.has` is a synchronous call returning a concrete boolean, not a Promise; out of scope.
+- No `if`/`while`/ternary/`!`/`&&`/`||` positions consume any promise-returning call, and no un-awaited Promise value is stored and later used in a boolean context.
+
+The file is clean
+
+=====
+
+The file is small and I've verified every async/promise usage. Let me confirm the analysis:
+
+**File: `src/reporting/metricsAggregator.ts`**
+
+Async/promise-returning functions relevant to this file:
+- `isCacheFresh` (line 9, declared `async`, returns `Promise<boolean>`)
+- `sleep` (imported from `src/shared/db.ts` line 12 — `() => new Promise(...)`, confirmed Promise-returning)
+- `db.orders.all()` (imported, returns a Promise via the `Table` abstraction)
+
+Every call site:
+1. Line 12 — `await sleep(1)` inside `isCacheFresh`: awaited, legal.
+2. Line 25 — `const fresh = await isCacheFresh(cacheKey(day, currency))`: awaited, legal. The subsequent `if (fresh)` on line 26 tests the already-awaited boolean value, which is fine.
+3. Line 30 — `const orders = await db.orders.all()`: awaited, legal.
+4. Line 41 — `await sleep(1)` inside `invalidate`: awaited, legal.
+
+No call to a promise-returning function appears in a boolean context without `await`. There is no `if (asyncCall())`, `if (!asyncCall())`, ternary condition, or `&&`/`||` chain consuming an un-awaited Promise. The file is clean.
+
+
+
+=====
+
+I've read the file. The one genuine match is clear:
+
+- Line 26-27: `const ok = hasStock(item.sku, item.qty)` followed by `if (!ok)`. `hasStock` is declared `async` (line 14) and returns `Promise<boolean>`. The Promise is stored in `ok` without `await`, so `ok` is always truthy, `!ok` is always `false`, the `if` branch never fires, and the intended stock validation / `OutOfStockError` is dead. Every other async call in the file (`db.products.all()`, `db.shipments.insert`, `db.products.update`, `db.orders.update`) is properly awaited; `await db.products.all()` inside the block (line 28) is unrelated and also awaited.
+

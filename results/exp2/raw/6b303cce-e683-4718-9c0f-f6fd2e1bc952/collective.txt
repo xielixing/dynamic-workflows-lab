@@ -1,0 +1,168 @@
+Error: Exit code 1
+
+> exp2-fix-fixture@1.0.0 test
+> vitest run
+
+
+[1m[46m RUN [49m[22m [36mv3.2.7 [39m[90mC:/codeagent/dynamic-workflows-lab/fixtures/exp2-fix[39m
+
+ [31m❯[39m tests/money.test.ts [2m([22m[2m2 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[32m 6[2mms[22m[39m
+[31m   [31m×[31m money[2m > [22mrounds discounts to whole cents, half-up (FIN-19)[39m[32m 5[2mms[22m[39m
+[31m     → expected 1699.15 to be 1699 // Object.is equality[39m
+   [32m✓[39m money[2m > [22mformats cents as dollars[32m 0[2mms[22m[39m
+ [31m❯[39m tests/dates.test.ts [2m([22m[2m2 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[32m 6[2mms[22m[39m
+[31m   [31m×[31m shortDate[2m > [22mrenders UTC dates with 1-based months (OPS-31)[39m[32m 5[2mms[22m[39m
+[31m     → expected '2026-02-08' to be '2026-03-08' // Object.is equality[39m
+   [32m✓[39m shortDate[2m > [22mpads single digit days[32m 0[2mms[22m[39m
+ [31m❯[39m tests/retry.test.ts [2m([22m[2m2 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[32m 7[2mms[22m[39m
+[31m   [31m×[31m withRetry[2m > [22mrejects with the last error after exhausting attempts (RET-7)[39m[32m 5[2mms[22m[39m
+[31m     → promise resolved "undefined" instead of rejecting[39m
+   [32m✓[39m withRetry[2m > [22mreturns the value when the call eventually succeeds[32m 0[2mms[22m[39m
+ [31m❯[39m tests/sorting.test.ts [2m([22m[2m2 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[32m 15[2mms[22m[39m
+[31m   [31m×[31m newestFirst[2m > [22msorts orders newest first (OPS-12)[39m[32m 14[2mms[22m[39m
+[31m     → expected [ 'o-1', 'o-2', 'o-3' ] to deeply equal [ 'o-2', 'o-3', 'o-1' ][39m
+   [32m✓[39m newestFirst[2m > [22mdoes not mutate the input array[32m 0[2mms[22m[39m
+ [31m❯[39m tests/batching.test.ts [2m([22m[2m2 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[32m 7[2mms[22m[39m
+[31m   [31m×[31m batchIds[2m > [22msplits 250 ids into chunks of 100 per ORD-88[39m[32m 6[2mms[22m[39m
+[31m     → expected [ 99, 99, 52 ] to deeply equal [ 100, 100, 50 ][39m
+   [32m✓[39m batchIds[2m > [22mkeeps original order within batches[32m 0[2mms[22m[39m
+ [31m❯[39m tests/refunds.test.ts [2m([22m[2m2 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[32m 6[2mms[22m[39m
+[31m   [31m×[31m refunds[2m > [22mcarries the customer id on the refund request[39m[32m 5[2mms[22m[39m
+[31m     → expected undefined to be 'c-42' // Object.is equality[39m
+   [32m✓[39m refunds[2m > [22msummarizes a refund for the ops log[32m 0[2mms[22m[39m
+
+[31m⎯⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 6 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+
+[41m[1m FAIL [22m[49m tests/batching.test.ts[2m > [22mbatchIds[2m > [22msplits 250 ids into chunks of 100 per ORD-88
+[31m[1mAssertionError[22m: expected [ 99, 99, 52 ] to deeply equal [ 100, 100, 50 ][39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[32m-   100,[39m
+[32m-   100,[39m
+[32m-   50,[39m
+[31m+   99,[39m
+[31m+   99,[39m
+[31m+   52,[39m
+[2m  ][22m
+
+[36m [2m❯[22m tests/batching.test.ts:[2m8:49[22m[39m
+    [90m  6| [39m    const ids = Array.from({ length: 250 }, (_, i) => `id-${String(i).…
+    [90m  7| [39m    [35mconst[39m result [33m=[39m [34mbatchIds[39m(ids)
+    [90m  8| [39m    [34mexpect[39m(result[33m.[39mbatches[33m.[39m[34mmap[39m((b) [33m=>[39m b[33m.[39mlength))[33m.[39m[34mtoEqual[39m([[34m100[39m[33m,[39m [34m100[39m[33m,[39m [34m50[39m])
+    [90m   | [39m                                                [31m^[39m
+    [90m  9| [39m    [34mexpect[39m(result[33m.[39moverflow)[33m.[39m[34mtoBe[39m([34m50[39m)
+    [90m 10| [39m  })
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m tests/dates.test.ts[2m > [22mshortDate[2m > [22mrenders UTC dates with 1-based months (OPS-31)
+[31m[1mAssertionError[22m: expected '2026-02-08' to be '2026-03-08' // Object.is equality[39m
+
+Expected: [32m"2026-0[7m3[27m-08"[39m
+Received: [31m"2026-0[7m2[27m-08"[39m
+
+[36m [2m❯[22m tests/dates.test.ts:[2m6:47[22m[39m
+    [90m  4| [39m[34mdescribe[39m([32m'shortDate'[39m[33m,[39m () [33m=>[39m {
+    [90m  5| [39m  [34mit[39m([32m'renders UTC dates with 1-based months (OPS-31)'[39m[33m,[39m () [33m=>[39m {
+    [90m  6| [39m    [34mexpect[39m([34mshortDate[39m([32m'2026-03-08T12:00:00Z'[39m))[33m.[39m[34mtoBe[39m([32m'2026-03-08'[39m)
+    [90m   | [39m                                              [31m^[39m
+    [90m  7| [39m    [34mexpect[39m([34mshortDate[39m([32m'2026-12-31T23:59:59Z'[39m))[33m.[39m[34mtoBe[39m([32m'2026-12-31'[39m)
+    [90m  8| [39m    [34mexpect[39m([34mshortDate[39m([32m'2026-01-01T00:00:00Z'[39m))[33m.[39m[34mtoBe[39m([32m'2026-01-01'[39m)
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m tests/money.test.ts[2m > [22mmoney[2m > [22mrounds discounts to whole cents, half-up (FIN-19)
+[31m[1mAssertionError[22m: expected 1699.15 to be 1699 // Object.is equality[39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 1699[39m
+[31m+ 1699.15[39m
+
+[36m [2m❯[22m tests/money.test.ts:[2m6:42[22m[39m
+    [90m  4| [39m[34mdescribe[39m([32m'money'[39m[33m,[39m () [33m=>[39m {
+    [90m  5| [39m  [34mit[39m([32m'rounds discounts to whole cents, half-up (FIN-19)'[39m[33m,[39m () [33m=>[39m {
+    [90m  6| [39m    [34mexpect[39m([34mapplyDiscountCents[39m([34m1999[39m[33m,[39m [34m15[39m))[33m.[39m[34mtoBe[39m([34m1699[39m)
+    [90m   | [39m                                         [31m^[39m
+    [90m  7| [39m    [34mexpect[39m([34mapplyDiscountCents[39m([34m1000[39m[33m,[39m [34m10[39m))[33m.[39m[34mtoBe[39m([34m900[39m)
+    [90m  8| [39m    [34mexpect[39m([34mapplyDiscountCents[39m([34m333[39m[33m,[39m [34m50[39m))[33m.[39m[34mtoBe[39m([34m167[39m)
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m tests/refunds.test.ts[2m > [22mrefunds[2m > [22mcarries the customer id on the refund request
+[31m[1mAssertionError[22m: expected undefined to be 'c-42' // Object.is equality[39m
+
+[32m- Expected:[39m 
+"c-42"
+
+[31m+ Received:[39m 
+undefined
+
+[36m [2m❯[22m tests/refunds.test.ts:[2m15:31[22m[39m
+    [90m 13| [39m  [34mit[39m([32m'carries the customer id on the refund request'[39m[33m,[39m () [33m=>[39m {
+    [90m 14| [39m    [35mconst[39m refund [33m=[39m [34mcreateRefund[39m([33mORDER[39m[33m,[39m [32m'damaged'[39m[33m,[39m [34m2500[39m)
+    [90m 15| [39m    [34mexpect[39m(refund[33m.[39mcustomerId)[33m.[39m[34mtoBe[39m([32m'c-42'[39m)
+    [90m   | [39m                              [31m^[39m
+    [90m 16| [39m    [34mexpect[39m([34mrefundSummary[39m(refund))[33m.[39m[34mtoContain[39m([32m'c-42'[39m)
+    [90m 17| [39m  })
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m tests/retry.test.ts[2m > [22mwithRetry[2m > [22mrejects with the last error after exhausting attempts (RET-7)
+[31m[1mAssertionError[22m: promise resolved "undefined" instead of rejecting[39m
+
+[32m- Expected:[39m 
+Error {
+  "message": "rejected promise",
+}
+
+[31m+ Received:[39m 
+undefined
+
+[36m [2m❯[22m tests/retry.test.ts:[2m11:43[22m[39m
+    [90m  9| [39m      [35mthrow[39m [35mnew[39m [33mError[39m([32m`boom [39m[36m${[39mcalls[36m}[39m[32m`[39m)
+    [90m 10| [39m    }
+    [90m 11| [39m    [35mawait[39m [34mexpect[39m([34mwithRetry[39m(alwaysFails[33m,[39m [34m3[39m))[33m.[39mrejects[33m.[39m[34mtoThrow[39m([32m'boom 3'[39m)
+    [90m   | [39m                                          [31m^[39m
+    [90m 12| [39m    [34mexpect[39m(calls)[33m.[39m[34mtoBe[39m([34m3[39m)
+    [90m 13| [39m  })
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m tests/sorting.test.ts[2m > [22mnewestFirst[2m > [22msorts orders newest first (OPS-12)
+[31m[1mAssertionError[22m: expected [ 'o-1', 'o-2', 'o-3' ] to deeply equal [ 'o-2', 'o-3', 'o-1' ][39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[31m+   "o-1",[39m
+[2m    "o-2",[22m
+[2m    "o-3",[22m
+[32m-   "o-1",[39m
+[2m  ][22m
+
+[36m [2m❯[22m tests/sorting.test.ts:[2m14:37[22m[39m
+    [90m 12| [39m  [34mit[39m([32m'sorts orders newest first (OPS-12)'[39m[33m,[39m () [33m=>[39m {
+    [90m 13| [39m    [35mconst[39m sorted [33m=[39m [34mnewestFirst[39m([33mORDERS[39m)
+    [90m 14| [39m    [34mexpect[39m(sorted[33m.[39m[34mmap[39m((o) [33m=>[39m o[33m.[39mid))[33m.[39m[34mtoEqual[39m([[32m'o-2'[39m[33m,[39m [32m'o-3'[39m[33m,[39m [32m'o-1'[39m])
+    [90m   | [39m                                    [31m^[39m
+    [90m 15| [39m  })
+    [90m 16| [39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯[22m[39m
+
+
+[2m Test Files [22m [1m[31m6 failed[39m[22m[90m (6)[39m
+[2m      Tests [22m [1m[31m6 failed[39m[22m[2m | [22m[1m[32m6 passed[39m[22m[90m (12)[39m
+[2m   Start at [22m 20:32:14
+[2m   Duration [22m 438ms[2m (transform 307ms, setup 0ms, collect 486ms, tests 47ms, environment 1ms, prepare 698ms)[22m
+
+=====
+
+Error: Exit code 2
+src/refunds.ts(7,5): error TS2353: Object literal may only specify known properties, and 'userId' does not exist in type 'RefundRequest'.

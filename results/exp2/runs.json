@@ -1,0 +1,158 @@
+[
+  {
+    "arm": "nl",
+    "run": 1,
+    "sessionId": "123e0ca1-90b7-4ffb-b0a3-e3ee876ac2fd",
+    "durationMs": 234820,
+    "testsGreen": true,
+    "tscClean": true,
+    "changedFiles": [
+      "src/config.ts",
+      "src/dates.ts",
+      "src/money.ts",
+      "src/refunds.ts",
+      "src/retry.ts",
+      "src/sorting.ts"
+    ]
+  },
+  {
+    "arm": "nl",
+    "run": 2,
+    "sessionId": "fd62a529-4466-4549-afe8-eab2a5948ec0",
+    "durationMs": 209176,
+    "testsGreen": true,
+    "tscClean": true,
+    "changedFiles": [
+      "src/config.ts",
+      "src/dates.ts",
+      "src/money.ts",
+      "src/refunds.ts",
+      "src/retry.ts",
+      "src/sorting.ts"
+    ]
+  },
+  {
+    "arm": "nl",
+    "run": 3,
+    "sessionId": "76fb416c-c34e-4fbe-b636-5a46068d7ba1",
+    "durationMs": 134612,
+    "testsGreen": true,
+    "tscClean": true,
+    "changedFiles": [
+      "src/config.ts",
+      "src/dates.ts",
+      "src/money.ts",
+      "src/refunds.ts",
+      "src/retry.ts",
+      "src/sorting.ts"
+    ]
+  },
+  {
+    "arm": "nl",
+    "run": 4,
+    "sessionId": "f350d74a-7098-4430-a5fd-4325936f768f",
+    "durationMs": 76773,
+    "testsGreen": false,
+    "tscClean": false,
+    "changedFiles": [
+      "src/dates.ts",
+      "src/money.ts"
+    ]
+  },
+  {
+    "arm": "nl",
+    "run": 5,
+    "sessionId": "2ba00d76-426b-426e-ae85-41a42a01a8dd",
+    "durationMs": 172261,
+    "testsGreen": true,
+    "tscClean": true,
+    "changedFiles": [
+      "src/config.ts",
+      "src/dates.ts",
+      "src/money.ts",
+      "src/refunds.ts",
+      "src/retry.ts",
+      "src/sorting.ts"
+    ]
+  },
+  {
+    "arm": "wf",
+    "run": 1,
+    "sessionId": "079e8745-8fa4-4cd4-aaa6-ddfbb7894e77",
+    "durationMs": 820835,
+    "testsGreen": true,
+    "tscClean": true,
+    "changedFiles": [
+      "src/config.ts",
+      "src/dates.ts",
+      "src/money.ts",
+      "src/refunds.ts",
+      "src/retry.ts",
+      "src/sorting.ts"
+    ]
+  },
+  {
+    "arm": "wf",
+    "run": 2,
+    "sessionId": "cbd506c4-36fc-4791-8f3d-0b97d4179ec7",
+    "durationMs": 426318,
+    "testsGreen": true,
+    "tscClean": true,
+    "changedFiles": [
+      "src/config.ts",
+      "src/dates.ts",
+      "src/money.ts",
+      "src/refunds.ts",
+      "src/retry.ts",
+      "src/sorting.ts"
+    ]
+  },
+  {
+    "arm": "wf",
+    "run": 3,
+    "sessionId": "1ff15672-5cd2-43c9-9249-e1ee5af355be",
+    "durationMs": 1290169,
+    "testsGreen": true,
+    "tscClean": true,
+    "changedFiles": [
+      "src/config.ts",
+      "src/dates.ts",
+      "src/money.ts",
+      "src/refunds.ts",
+      "src/retry.ts",
+      "src/sorting.ts"
+    ]
+  },
+  {
+    "arm": "wf",
+    "run": 4,
+    "sessionId": "ecfe5474-6977-4a49-995e-3f686f7a8b99",
+    "durationMs": 806195,
+    "testsGreen": true,
+    "tscClean": true,
+    "changedFiles": [
+      "src/config.ts",
+      "src/dates.ts",
+      "src/money.ts",
+      "src/refunds.ts",
+      "src/retry.ts",
+      "src/sorting.ts"
+    ]
+  },
+  {
+    "arm": "wf",
+    "run": 5,
+    "sessionId": "80707377-6cd5-431e-9ab2-1f5d4b35fd6d",
+    "durationMs": 442652,
+    "testsGreen": true,
+    "tscClean": true,
+    "changedFiles": [
+      "src/config.ts",
+      "src/dates.ts",
+      "src/money.ts",
+      "src/refunds.ts",
+      "src/retry.ts",
+      "src/sorting.ts"
+    ]
+  }
+]

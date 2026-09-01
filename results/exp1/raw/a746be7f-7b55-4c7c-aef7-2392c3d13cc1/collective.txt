@@ -1,0 +1,90 @@
+All files have been read fully and cross-checked. Here is the audit report.
+
+## Findings
+
+**src/users/authService.ts:36 `assertCanManage` — `const allowed = hasPermission(user, action)` (used at line 37 as `if (!allowed)`)**
+
+```ts
+35  export async function assertCanManage(user: User, action: string): Promise<void> {
+36    const allowed = hasPermission(user, action)
+37    if (!allowed) {
+38      log.warn(`denied ${action} for ${user.id}`)
+39      throw new ForbiddenError(user.id, action)
+40    }
+```
+
+`hasPermission` (declared at `src/users/authService.ts:26`) is `async` and returns `Promise<boolean>` — confirmed. Its result is captured without `await` into `const allowed`, then negated at line 37. A Promise object is always truthy, so `!allowed` is never `true`: the `ForbiddenError` is never thrown and the security gate (SEC-12 in the comment) silently allows any action for any user, including `customer` trying `report:export` or `order:cancel`. `recordAccess` still runs, so an audit entry is even recorded for the denied-but-granted action.
+
+## Files audited with no findings
+
+- **src/index.ts** — all db/quote/reserve/digest/totals calls correctly `await`ed; `if (paid)` checks a sync array result.
+- **src/shared/db.ts** — seed data and async method definitions only; no async-call-in-boolean-context usage.
+- **src/shared/logger.ts** — logger methods are synchronous (`emit` returns `void`), no boolean contexts.
+- **src/shared/types.ts** — pure interfaces.
+- **src/users/profileService.ts** — `if (!user)` after already-`await`ed `db.users.find` at line 5; correct.
+- **src/users/userService.ts** — `if (!user)` after already-`await`ed `db.users.find` at line 13; correct. `activeCustomers` returns the promise from a function, `getUser` returns a promise — both `return`, not boolean-checked.
+
+## Total
+
+**1 finding** (the missing-`await` security gate in `src/users/authService.ts`).
+
+=====
+
+I've read all six files fully plus `src/shared/db.ts`. I confirmed the async-ness of each called helper from its definition in the audited files, and cross-checked that `db.*` methods are all async (they are, per `db.ts` line 12 and the `Table` class being fully async).
+
+## Audit findings
+
+**src/orders/fulfillmentService.ts:26** `fulfillOrder` — `const ok = hasStock(item.sku, item.qty); if (!ok)` 
+
+`hasStock` (defined at line 14-18) is `async` and returns `Promise<boolean>`. At line 26 the call is stored without `await`, and line 27 does `if (!ok)`. A Promise is always truthy, so `!ok` is never `true`: the `OutOfStockError` never throws and the stock-verification gate silently never fires. `shipment` is created and `db.shipments.insert` runs even when a line item is out of stock (the phantom-shipment bug WMS-77), and stock is then decremented below zero (per line 47).
+
+**src/orders/returnsService.ts:51** `autoApproveIfEligible` — `const blocked = autoApprovalBlocked(orderId); if (!blocked)`
+
+`autoApprovalBlocked` (defined at line 36-43) is `async`, returning `Promise<boolean>`. Assigned at line 51 without `await`, then `if (!blocked)` at line 52. The promise is always truthy, so `!blocked` is always false and the auto-approval branch never executes: eligible small in-window refunds are never auto-approved (FIN-31 gate silently degrades to require a human approver; the pending refunds list is correct but the state-change never happens).
+
+**src/inventory/reservationService.ts:15** `reserveForOrder` — `const already = hasActiveReservation(orderId); if (!already)`
+
+`hasActiveReservation` (defined at line 4-7) is `async`, returning `Promise<boolean>`. Assigned at line 15 without `await`, checked at line 16. The promise is always truthy, so `if (!already)` is never true: a reservation row is *never* inserted. The function always falls through to the "existing" branch, where for a brand-new order `db.reservations.where(...)` returns `[]` and `existing[0]` is `undefined`, so `reserveForOrder` returns `undefined` instead of a `Reservation` (the INV-118 idempotency contract flips to "never reserved").
+
+## No findings
+- `src/orders/orderService.ts` — every boolean check operates on awaited values (`if (!order)` at line 39 is post-`await`); all other async results are awaited or returned.
+- `src/inventory/stockService.ts` — only guard is `low.length > 0` (synchronous array); all async calls awaited.
+- `src/inventory/supplierSync.ts` — no async results used in boolean context.
+
+**Total findings: 3** — all the `Promise`-in-boolean-context bug, one in each of `fulfillmentService.ts`, `returnsService.ts`, and `reservationService.ts`. No files were modified.
+
+=====
+
+I've read all four target files and confirmed the async/return-value semantics in `src/shared/db.ts` (every `Table` method is `async`, and `sleep` returns a `Promise<void>`) and `src/shared/logger.ts` (logger methods are synchronous).
+
+## Audit findings
+
+**src/notifications/digestBuilder.ts**
+- `src/notifications/digestBuilder.ts:21` `buildDigestsFor` — `const sent = hasDigestBeenSent(id)` (checked at line 22 via `if (!sent)`).
+
+`hasDigestBeenSent` (line 7) is `async` and explicitly typed `Promise<boolean>`; its body awaits `db.events.where(...)` before returning a boolean, so it genuinely returns a Promise. At line 21 the returned Promise is stored in `sent` with no `await`, and line 22 does `if (!sent) { ... }`. Because any Promise object is truthy, `!sent` is always `false`, so the guard never fires: the digest-compose / `stageEmail` / `db.events.insert('digest.sent')` branch is skipped for every user on every cycle. The intended "skip users who already got a digest" check silently always reports "sent", so no digests are ever delivered (the `digest.sent` event is never recorded either, since the insert lives inside the dead branch).
+
+Reported files: `src/notifications/digestBuilder.ts` only. `emailService.ts`, `pushService.ts`, and `smsService.ts` are clean — all async calls there are properly awaited (`await stageEmail(...)`, `await tokenFor(...)`, `await sendSms(...)`, `await sleep(...)`), and the one bare boolean check in `smsService.ts:14` (`OPT_OUTS.has(userId)`) is a synchronous `Set.prototype.has` call, not a Promise, so it is not a bug.
+
+**Total findings: 1**
+
+=====
+
+I've read all seven audit target files plus the shared `db.ts` and `logger.ts` to confirm signatures. Here is my analysis.
+
+## Verified facts
+- `db` table methods (`find`, `all`, `where`, `count`, `insert`, ...) are all `async` (Promise-returning) — confirmed in `src/shared/db.ts`, lines 25–60.
+- `logger` methods are synchronous — confirmed in `src/shared/logger.ts`.
+- `promoIsStale(code)` is `async` and returns `Promise<boolean>` — confirmed in `src/pricing/promoCodes.ts`, lines 4–8.
+
+## Findings
+
+**src/pricing/promoCodes.ts:16** `applyPromo` — `promoIsStale(code)`
+- Line 16: `const stale = promoIsStale(code)` stores the returned Promise in `stale` without `await`.
+- Line 17 immediately consumes it in a boolean guard: `if (!stale) { ... }`.
+
+A Promise object is always truthy, so `!stale` is permanently `false`: the discount branch at lines 17–22 is never entered, and `applyPromo` always returns `totalCents` unchanged. The staleness gate silently never opens — every promo (valid `SAVE10` or revoked `GHOST5`) is treated as stale, and no discount is ever applied; conversely the FIN-27 gate at line 17 never actually blocks or allows anything, it just always suppresses the discount. The fix is `const stale = await promoIsStale(code)`.
+
+No findings in `currencyRates.ts`, `discountEngine.ts`, `priceCalculator.ts`, `auditTrail.ts`, `metricsAggregator.ts`, or `salesReporter.ts` — every other async call is properly awaited (`await convert(...)`, `await db.products.all()`, `await isCacheFresh(...)`, `await salesRows()`, etc.), and the `void db.events.insert(event).catch(...)` in `auditTrail.ts` and the bare `return db.events.where(...)` in `eventsFor` are intentional/returned rather than boolean-checked.
+
+**Total findings: 1**

@@ -1,0 +1,305 @@
+The audited file contains only TypeScript interface declarations. There are no functions, no async calls, and no boolean-context expressions anywhere in the file, so there are no instances of the bug pattern
+
+=====
+
+I've read the file in full. Let me analyze it for the bug pattern — a Promise used directly in boolean context (missing await).
+
+The file contains three functions:
+- `fetchExchangeTable()` (line 17) — async, returns `Promise<Record<string, number>>`
+- `convert()` (line 26) — async
+- `listSupportedCurrencies()` (line 35) — async
+
+Candidate boolean-context expressions:
+- Line 19: `if (Math.random() < 0.15)` — `Math.random()` is synchronous, returns a number; this is a numeric comparison, not a promise. Not a bug.
+- Line 29: `if (!rate)` — `rate` comes from `await fetchExchangeTable()` (line 27), so `table[target]` is a resolved number value, not a Promise. Not a bug.
+
+Async call sites:
+- Line 18: `await sleep(5)` — has `await`. Correct.
+- Line 27: `await fetchExchangeTable()` — has `await`. Correct.
+- Line 36: `await fetchExchangeTable()` — has `await`. Correct.
+
+No promise is consumed in a boolean context anywhere. All async calls have `await`, and the two `if` guards operate on synchronous values (`Math.random()` result, and a number from an awaited table lookup). The file is clean for this bug pattern.
+
+
+
+=====
+
+The file has only 37 lines and I've verified all Promise-returning call sites against the exclusion rules:
+
+1. **Line 16**: `void db.events.insert(event).catch(...)` — fire-and-forget with explicit `void` and a `.catch()` chain. Excluded ("strictly NOT a bug").
+2. **Line 22**: `return db.events.where(...)` — the promise is `return`ed from an async function. Excluded.
+3. **Lines 26, 31**: `await db.events.all()` — properly awaited. Excluded.
+
+There are no `if`/`while`/`do...while` conditions, no `!` negations, no ternaries, and no `&&`/`||` boolean decisions anywhere in the file. The audited file is clean with respect to this bug pattern.
+
+
+
+=====
+
+I've read the audited file in full and verified all async call signatures against `src/shared/db.ts` (all `Table` methods—`find`, `all`, `update`, `delete`—are declared `async`, returning `Promise`).
+
+Audit of `src/users/profileService.ts`:
+
+- Line 5: `await db.users.find(userId)` — properly awaited.
+- Line 6: `if (!user)` — operates on the resolved value, not the promise.
+- Line 7: `await db.orders.all()` — properly awaited.
+- Line 8: `orders.filter(...)` — sync method on the resolved array.
+- Line 25: `if (!/^[...]+@.../.test(email))` — `RegExp.prototype.test` is synchronous and returns a real boolean; not a promise.
+- Line 28: `await db.users.update(...)` — properly awaited.
+- Line 32: `await Promise.all([...])` — properly awaited; `primary`/`duplicate` are resolved values (from destructuring of the awaited `Promise.all`), so line 33's `if (!primary || !duplicate)` operates on resolved objects, not promises.
+- Lines 37-40: sync `filter` and awaited updates.
+
+Every async call in this file is correctly awaited; no call result is consumed in a boolean context without an `await`. No instances of the missing-await boolean-context pattern exist in this file.
+
+
+
+=====
+
+The file is fully synchronous — `emit` is a plain function returning `void`, and the logger factory returns synchronous closures. There are no `async` functions, no `Promise` values, and no boolean-context call sites anywhere in the file. The audit is clean
+
+=====
+
+I've read the audited file in full and confirmed the definitions of its dependencies.
+
+Analysis of `C:\codeagent\dynamic-workflows-lab\fixtures\exp1-audit\src\pricing\discountEngine.ts`:
+
+- Line 27: `const discounted = volumeDiscount(items)` — `volumeDiscount` (defined line 16) is a **synchronous** function returning `DiscountResult`. Its result is stored, not used in boolean context, and it returns no Promise.
+- Lines 18-19: `if (!tier)` — `tier` comes from `TIERS.find(...)`, a genuine boolean/synchronous check on a real value, no async involved.
+- `bestPrice` (line 26) is itself async but contains no boolean-context consumption of any async call — the only call (`volumeDiscount`) is synchronous.
+
+There are no boolean-context uses of any async function or Promise in this file. The file is clean for this pattern
+
+=====
+
+I've read the file in full. Let me analyze each call site for the bug pattern (Promise used directly in boolean context without `await`).
+
+Line-by-line analysis:
+- **Line 25**: `const fresh = await isCacheFresh(...)` — has `await`. Not a bug.
+- **Line 26**: `if (fresh)` — `fresh` holds the awaited boolean, not a Promise. Not a bug.
+- **Line 42**: `if (day)` — `day` is a string parameter, synchronous. Not a bug.
+- **Line 44**: `if (key)` — `key` is a `string | undefined` from `Array.find()`. Not a bug.
+- **Line 11**: `if (!built)` — `built` is `number | undefined` from `Map.get()`. Not a bug.
+- Lines 12, 41: `await sleep(1)` — has `await`, and not in boolean context.
+
+`isCacheFresh` is the only async function called, and its sole call site on line 25 is properly awaited. No Promise value is ever consumed as a boolean. The file is clean
+
+=====
+
+Reading complete. Let me verify the async nature of the used functions and check for any other boolean-context consumption.
+
+The file's key flow:
+- Line 21-24: `loadPermissionMatrix()` is `async`, returns a Promise.
+- Line 26-29: `hasPermission()` is `async`, returns `Promise<boolean>`.
+- Line 36: `const allowed = hasPermission(user, action)` — no `await`, so `allowed` is a Promise.
+- Line 37: `if (!allowed)` — a Promise consumed in boolean context.
+
+The `!Promise` is always `false` (a Promise object is always truthy), so the denial branch never executes and `assertCanManage` never throws `ForbiddenError`, silently defeating security gate SEC-12.
+
+No other candidates: line 22 (`await sleep(4)`), line 27 (`await loadPermissionMatrix()`), and line 41 (`await recordAccess(...)`) all have `await`. No `.then()` chains, no standalone fire-and-forget used as boolean
+
+=====
+
+I've read the file in full. Let me verify each candidate boolean-context call:
+
+1. **Line 14**: `if (OPT_OUTS.has(userId))` — `OPT_OUTS` is a `Set`, and `.has()` is a synchronous method returning a real boolean. No async involved. Not a bug.
+2. **Line 24**: `await sendSms(userId, ...)` — has `await` before the call. Not a bug.
+3. **Line 8-30**: All other calls (`sleep`, `makeLogger`) are not used in boolean contexts.
+
+The `optOut`, `sendSms`, `shipNotice`, and `optOutCount` functions are themselves async and return promises, but their results are never consumed in boolean positions within this file (as it is a module with exported functions only, not a caller). There are no confirmed instances of a Promise used directly in boolean context.
+
+
+
+=====
+
+I've read the audited file in full and verified the supporting modules. Analysis of `src/reporting/salesReporter.ts`:
+
+- Line 22: `await db.orders.all()` — properly awaited, and `db` is a Table class whose methods are async (confirmed in `src/shared/db.ts`), but this call has `await`. Not a bug.
+- Line 35: `await salesRows()` — properly awaited. Not a bug.
+- Line 36: `if (rows.length === 0)` — synchronous array `.length` comparison; `rows` is already the awaited resolved array. Not a promise in boolean context.
+- Line 37: `a.revenueCents >= b.revenueCents ? a : b` — synchronous numeric comparison inside `reduce`. Not a promise, not a bug.
+- `bucketByDay` (line 10) is a genuinely synchronous function (`Map`, no async involved). Not a bug.
+
+Every async call in this file is awaited; no Promise value is used as a boolean in an `if`/`while`/ternary/`!`/`&&`/`||` position. The file is clean.
+
+
+
+=====
+
+I've read the file in full. Let me verify there are no boolean-context async calls I might have missed by checking the code structure.
+
+The file contents:
+- `stageEmail` (line 15): async, uses `await sleep(2)`, pushes to array. No boolean-context call.
+- `drainOutbox` (line 20): async, `await sleep(3)` inside for-loop, returns `batch.length`. No boolean-context call.
+- `orderConfirmation` (line 30): async, `await stageEmail(...)`. No boolean-context call.
+- `outboxSize` (line 35): async, `await sleep(1)`, returns `OUTBOX.length`. No boolean-context call.
+
+There are no `if`, `while`, `do...while`, `!` negations, ternaries, or `&&`/`||` expressions in this file at all — every async call is either prefixed with `await` or fire-and-forget-free (none exist), and no promise value is consumed as a boolean anywhere. The file is clean for this pattern
+
+=====
+
+This is a single-file audit. The file is small (38 lines) and contains one clear instance of the bug pattern.
+
+Analysis:
+- Line 15: `const already = hasActiveReservation(orderId)` — `hasActiveReservation` is defined at line 4 as `async function ... Promise<boolean>`, so `already` is a Promise, not a boolean.
+- Line 16: `if (!already)` — the negation of a Promise is always `false` (any Promise object is truthy), so the guard is an always-false condition and the idempotent-check block never executes; a duplicate reservation row is inserted on every call, violating the documented INV-118 contract.
+
+Other lines checked: line 6 (`return rows.length > 0`) returns a real boolean from an async function — fine. Lines 24/27/33/35 use `await` properly. `releaseReservation` (lines 31-37) has no promise-in-boolean context.
+
+The report is for line 15 (the offending call), whose result is consumed as a boolean at line 16
+
+=====
+
+I've read the file. Let me verify the async nature of `hasStock`.
+
+Line 14: `async function hasStock(sku: string, qty: number): Promise<boolean>` — confirmed async, returns a Promise.
+
+Line 26-27 in `fulfillOrder`:
+```ts
+const ok = hasStock(item.sku, item.qty)
+if (!ok) {
+```
+`ok` holds a Promise, not a boolean. `!ok` on a Promise is always `false` (Promise objects are truthy). The out-of-stock guard is silently broken — the `throw new OutOfStockError(...)` can never fire, allowing shipments to be created without verifying stock.
+
+This is the only candidate in the file. Other call sites (`await db.products.all()`, `await db.shipments.insert()`, etc.) are properly awaited. `if (product)` at line 46 tests a synchronous object, not a promise
+
+=====
+
+I've read the entire file. Let me analyze each async call for the bug pattern:
+
+1. **Line 22** `await sleep(3)` — properly awaited, not in boolean context.
+2. **Line 23** `SUPPLIER_CATALOG.find((r) => r.sku === sku)` — synchronous `Array.find`, result stored in `row` and used with `??` (nullish coalescing), not a Promise.
+3. **Line 46** `await db.products.all()` — properly awaited.
+4. **Line 31** `p.stock < 15` / **Line 33** `if (row)` — `row` is a synchronous `.find()` result (a concrete object or undefined), not a Promise.
+
+There are no call sites where an async function's result is consumed as a boolean. Every `await` is present, and every boolean-context expression operates on synchronous values. The file is clean for this bug pattern.
+
+
+
+=====
+
+I've read the audited file. Let me verify the analysis.
+
+Key candidate at lines 51-52:
+- `autoApprovalBlocked` is declared `async` at line 36 and returns `Promise<boolean>`.
+- Line 51 assigns the Promise without `await`: `const blocked = autoApprovalBlocked(orderId)`.
+- Line 52 consumes it in a negation: `if (!blocked)`.
+
+A Promise object is always truthy, so `!blocked` is always `false` and the auto-approval branch is unreachable — the function always returns `false` at line 59. This is the exact pattern: async call result used as a boolean without `await`.
+
+I checked all other boolean contexts: every other call (`db.orders.find`, `db.refunds.where`, `db.refunds.update`) is properly `await`ed, and `if (!order)` operates on awaited results, not Promises. This is the only confirmed instance
+
+=====
+
+I've read the audited file in full (28 lines) and verified the `db` async signatures. Let me verify no other boolean-context uses exist in the file.
+
+The file's async calls:
+- Line 5: `return db.users.find(id)` — returned promise, correct (NOT a bug per rules)
+- Line 9: `return db.users.where(...)` — returned promise, correct
+- Line 13: `const user = await db.users.find(id)` — has `await`, correct
+- Line 18: `await db.users.update(id, ...)` — has `await`, correct
+- Line 22: `const users = await db.users.all()` — has `await`, correct
+
+Every async/await usage is either `await`ed or properly returned. There are zero promise calls consumed in boolean context (`if`/`!`/ternary/`&&`/`||`/boolean-typed parameter). The `if (!user) return` at line 14 operates on the already-awaited value, and `if (user.role === 'admin')` at line 15 is a synchronous property comparison.
+
+The file is clean for this bug pattern
+
+=====
+
+The file is 40 lines. I've read it in full and analyzed every candidate boolean context:
+
+- Line 17: `if (currency === 'USD')` — synchronous string comparison, not a promise.
+- Line 28: `if (!product)` — `product` is the synchronous result of `Array.prototype.find()`, not a promise.
+- Line 36: `if (products.length === 0)` — synchronous number comparison, not a promise.
+
+All async call sites are correctly awaited:
+- Line 21: `await convert(...)`
+- Line 26: `const products = await db.products.all()`
+- Line 35: `const products = await db.products.all()`
+
+No async function's call result is consumed in a boolean position anywhere in this file. The file is clean for this bug pattern.
+
+
+
+=====
+
+The file is small and I've read it in full. Let me verify the async/await usage throughout.
+
+Analysis of `C:\codeagent\dynamic-workflows-lab\fixtures\exp1-audit\src\inventory\stockService.ts`:
+
+1. **Line 12-20 `stockLevels()`**: Uses `await Promise.all([...])` — properly awaited. The `.filter`/`.reduce` callbacks are synchronous. No boolean-context promise use.
+
+2. **Line 22-29 `lowStockReport()`**: `const levels = await stockLevels()` — properly awaited. Line 25 `if (low.length > 0)` is a number comparison, not a promise-in-boolean. No issue.
+
+3. **Line 31-34 `totalUnitsOnHand()`**: `const products = await db.products.all()` — properly awaited. No issue.
+
+There is no call consumed as a boolean without `await` anywhere in this file. All async calls are properly awaited, and all boolean conditions operate on resolved values (numbers, arrays), not Promises.
+
+
+
+=====
+
+The file is entirely definitions: async `Table` methods, seed data, and the `db` export object. There are no call sites that consume a promise in a boolean context. The `if (idx >= 0)` checks compare a plain number, and `pred ? ... : ...` on line 42 tests a synchronous boolean parameter — neither involves Promises.
+
+For verification I confirmed the only async functions in the file are the `Table` method definitions themselves; no caller in this file invokes them, so there is no missing-`await` bug here
+
+=====
+
+I've read the audit file in full. Let me analyze each call site for the bug pattern.
+
+The file `src/orders/orderService.ts` contains 5 exported async functions. Checking every call site:
+
+1. `getOrder` (line 5-7): `return db.orders.find(id)` — the promise is returned from an async function. Correct, not a bug.
+2. `ordersForUser` (line 9-12): `await db.orders.all()` is properly awaited. The `.filter(o => o.userId === userId)` callback compares synchronous strings, no promise.
+3. `createOrder` (line 14-31): `await priceOfSku(...)` and `await db.orders.insert(order)` are both awaited. The `reduce` callback is synchronous arithmetic.
+4. `markPaid` (line 33-35): `await db.orders.update(...)` is awaited.
+5. `cancelOrder` (line 37-44): `await db.orders.find(orderId)` is awaited, so `order` on line 39 (`if (!order)`) is `Order | null`, not a Promise. Line 40 compares synchronous `order.status` strings.
+
+There is no candidate boolean-context call that lacks an `await`: no `if (someAsync())`, no `!asyncCall()`, no ternary or `&&`/`||` consuming a Promise, and no promise value passed as a boolean parameter. The file is clean for this pattern.
+
+
+
+=====
+
+All async calls in `src/index.ts` are properly awaited: `quoteCart`, `reserveForOrder`, `buildDigestsFor`, `dailyOrderTotals`, `db.orders.all()`, and `db.users.all()` all appear with `await` in the imports I verified (`src/pricing/priceCalculator.ts:15`, `src/inventory/reservationService.ts:14`, `src/notifications/digestBuilder.ts:18`, `src/reporting/metricsAggregator.ts:24`, `src/shared/db.ts:30`).
+
+The only conditional checks are on real values, not Promises:
+- Line 17 `if (paid)` — `paid` comes from `await db.orders.all()` then `.find(...)`, so it is an `Order | undefined`, not a Promise.
+- Line 25 `.filter(...)` — operates on awaited user data.
+
+No Promise is used in any boolean position. The file is clean
+
+=====
+
+The audit is complete. I read `src/notifications/pushService.ts` in full and also verified the imported modules (`src/shared/db.ts` — `sleep` returns a Promise; `src/shared/logger.ts` — synchronous).
+
+Analysis of all boolean-context candidates:
+
+1. **Line 17 / `tokenFor`** — async function correctly declared; its only call at line 23 is `await`ed. Not a bug.
+2. **Line 24 `if (!target)`** — `target` is the *awaited* result (`PushToken | null`), not a Promise. The `!` negation applies to the real value. Not a bug.
+3. **Line 35 `await sleep(1)`** — properly awaited. Not a bug.
+
+No async call result is consumed in boolean context anywhere in this file. The file is clean for this bug pattern
+
+=====
+
+I've read the audit target in full. Let me verify the analysis against the pattern.
+
+The audited file is `src/pricing/promoCodes.ts`. The one candidate is at lines 16-17 in `applyPromo`:
+
+```ts
+const stale = promoIsStale(code)
+if (!stale) {
+```
+
+Verification:
+1. `promoIsStale` is defined in the same file at line 4 as `async function promoIsStale(code: string): Promise<boolean>` — it is genuinely async and returns a Promise.
+2. The call on line 16 has no `await`, no `void`, no `return`, no `throw`, and is not inside a `.then()`/`.catch()`. `stale` receives the Promise object itself.
+3. The `!stale` on line 17 consumes the Promise as a boolean: a Promise object is always truthy, so `!stale` is ALWAYS `false`. This is exactly the "`const x = someAsync(); if (x)`" variant named in the task's verification point 4 — the missing `await` makes the guard silently broken, so the discount inside the block (lines 18-21) is never applied.
+4. All other calls in the file (`db.promos.find` at lines 5, 18, 27) either have `await` or are in genuinely async/awaited contexts, and `describePromo` is clean.
+
+
+
+=====
+
+The file has one clear candidate at lines 21-22. `hasDigestBeenSent` is defined at line 7 as `async function ...: Promise<boolean>`, so it returns a Promise. At line 21, `const sent = hasDigestBeenSent(id)` captures the Promise without `await`, and line 22 consumes it as `if (!sent)`. A Promise is always truthy, so `!sent` is always `false` — the digest-send block never executes. All other derived calls (`composeDigest`, `stageEmail`, `db.*`) are properly awaited, and `mine.length === 0` at line 42 is a real synchronous boolean.
+

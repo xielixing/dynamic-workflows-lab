@@ -1,0 +1,19 @@
+{
+  "exp": "exp2",
+  "arm": "nl",
+  "run": 4,
+  "startedAt": "2026-09-01T13:30:22.063Z",
+  "durationMs": 76773,
+  "exit": 0,
+  "sessionId": "f350d74a-7098-4430-a5fd-4325936f768f",
+  "testsGreen": false,
+  "testOutputTail": "\n\u001b[1m\u001b[46m RUN \u001b[49m\u001b[22m \u001b[36mv3.2.7 \u001b[39m\u001b[90mC:/codeagent/dynamic-workflows-lab/fixtures/exp2-fix\u001b[39m\n\n \u001b[32m✓\u001b[39m tests/dates.test.ts \u001b[2m(\u001b[22m\u001b[2m2 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 2\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m tests/money.test.ts \u001b[2m(\u001b[22m\u001b[2m2 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 2\u001b[2mms\u001b[22m\u001b[39m\n \u001b[31m❯\u001b[39m tests/retry.test.ts \u001b[2m(\u001b[22m\u001b[2m2 tests\u001b[22m\u001b[2m | \u001b[22m\u001b[31m1 failed\u001b[39m\u001b[2m)\u001b[22m\u001b[32m 9\u001b[2mms\u001b[22m\u001b[39m\n\u001b[31m   \u001b[31m×\u001b[31m withRetry\u001b[2m > \u001b[22mrejects with the last error after exhausting attempts (RET-7)\u001b[39m\u001b[32m 7\u001b[2mms\u001b[22m\u001b[39m\n\u001b[31m     → promise resolved \"undefined\" instead of rejecting\u001b[39m\n   \u001b[32m✓\u001b[39m withRetry\u001b[2m > \u001b[22mreturns the value when the call eventually succeeds\u001b[32m 0\u001b[2mms\u001b[22m\u001b[39m\n \u001b[31m❯\u001b[39m tests/refunds.test.ts \u001b[2m(\u001b[22m\u001b[2m2 tests\u001b[22m\u001b[2m | \u001b[22m\u001b[31m1 failed\u001b[39m\u001b[2m)\u001b[22m\u001b[32m 8\u001b[2mms\u001b[22m\u001b[39m\n\u001b[31m   \u001b[31m×\u001b[31m refunds\u001b[2m > \u001b[22mcarries the customer id on the refund request\u001b[39m\u001b[32m 7\u001b[2mms\u001b[22m\u001b[39m\n\u001b[31m     → expected undefined to be 'c-42' // Object.is equality\u001b[39m\n   \u001b[32m✓\u001b[39m refunds\u001b[2m > \u001b[22msummarizes a refund for the ops log\u001b[32m 0\u001b[2mms\u001b[22m\u001b[39m\n \u001b[31m❯\u001b[39m tests/sorting.test.ts \u001b[2m(\u001b[22m\u001b[2m2 tests\u001b[22m\u001b[2m | \u001b[22m\u001b[31m1 failed\u001b[39m\u001b[2m)\u001b[22m\u001b[32m 20\u001b[2mms\u001b[22m\u001b[39m\n\u001b[31m   \u001b[31m×\u001b[31m newestFirst\u001b[2m > \u001b[22msorts orders newest first (OPS-12)\u001b[39m\u001b[32m 19\u001b[2mms\u001b[22m\u001b[39m\n\u001b[31m     → expected [ 'o-1', 'o-2', 'o-3' ] to deeply equal [ 'o-2', 'o-3', 'o-1' ]\u001b[39m\n   \u001b[32m✓\u001b[39m newestFirst\u001b[2m > \u001b[22mdoes not mutate the input array\u001b[32m 0\u001b[2mms\u001b[22m\u001b[39m\n \u001b[31m❯\u001b[39m tests/batching.test.ts \u001b[2m(\u001b[22m\u001b[2m2 tests\u001b[22m\u001b[2m | \u001b[22m\u001b[31m1 failed\u001b[39m\u001b[2m)\u001b[22m\u001b[32m 7\u001b[2mms\u001b[22m\u001b[39m\n\u001b[31m   \u001b[31m×\u001b[31m batchIds\u001b[2m > \u001b[22msplits 250 ids into chunks of 100 per ORD-88\u001b[39m\u001b[32m 6\u001b[2mms\u001b[22m\u001b[39m\n\u001b[31m     → expected [ 99, 99, 52 ] to deeply equal [ 100, 100, 50 ]\u001b[39m\n   \u001b[32m✓\u001b[39m batchIds\u001b[2m > \u001b[22mkeeps original order within batches\u001b[32m 0\u001b[2mms\u001b[22m\u001b[39m\n\n\u001b[2m Test Files \u001b[22m \u001b[1m\u001b[31m4 failed\u001b[39m\u001b[22m\u001b[2m | \u001b[22m\u001b[1m\u001b[32m2 passed\u001b[39m\u001b[22m\u001b[90m (6)\u001b[39m\n\u001b[2m      Tests \u001b[22m \u001b[1m\u001b[31m4 failed\u001b[39m\u001b[22m\u001b[2m | \u001b[22m\u001b[1m\u001b[32m8 passed\u001b[39m\u001b[22m\u001b[90m (12)\u001b[39m\n\u001b[2m   Start at \u001b[22m 21:31:40\n\u001b[2m   Duration \u001b[22m 421ms\u001b[2m (transform 220ms, setup 0ms, collect 356ms, tests 48ms, environment 1ms, prepare 623ms)\u001b[22m\n\n",
+  "tscClean": false,
+  "changedFiles": [
+    "src/dates.ts",
+    "src/money.ts"
+  ],
+  "result": "Money fix applied. 2 down, 4 diagnosis reports to go.",
+  "costUsd": 0.695739,
+  "stderr": ""
+}

@@ -1,0 +1,49 @@
+All six findings are confirmed against the actual source. Every flagged call resolves to a genuinely `async` function returning `Promise<boolean>`, the Promise is stored un-awaited in a local, and that local immediately feeds an `if (!...)` guard — so the guard always evaluates the truthy Promise and the `!` branch is unreachable. No `void`/`.catch()`/`return` exceptions apply to any of them.
+
+## Audit report
+
+Coverage: **all 24 TypeScript files under `src/`** audited (4 parallel reviewer agents; each of your findings below was independently re-verified by me against the source, and no file was modified).
+
+**6 findings** — all the same variant: `const x = asyncBooleanFn(); if (!x) { ... }`, where `x` is always a truthy Promise, so the `if` branch never executes and the intended guard is silently bypassed.
+
+| # | File | Line | Enclosing function | Offending call expression |
+|---|------|------|--------------------|---------------------------|
+| 1 | `src/orders/fulfillmentService.ts` | 26 | `fulfillOrder` | `hasStock(item.sku, item.qty)` inside `const ok = hasStock(...)` guarding `if (!ok)` (line 27) |
+| 2 | `src/orders/returnsService.ts` | 51 | `autoApproveIfEligible` | `autoApprovalBlocked(orderId)` inside `const blocked = ...` guarding `if (!blocked)` (line 52) |
+| 3 | `src/users/authService.ts` | 36 | `assertCanManage` | `hasPermission(user, action)` inside `const allowed = ...` guarding `if (!allowed)` (line 37) |
+| 4 | `src/pricing/promoCodes.ts` | 16 | `applyPromo` | `promoIsStale(code)` inside `const stale = ...` guarding `if (!stale)` (line 17) |
+| 5 | `src/inventory/reservationService.ts` | 15 | `reserveForOrder` | `hasActiveReservation(orderId)` inside `const already = ...` guarding `if (!already)` (line 16) |
+| 6 | `src/notifications/digestBuilder.ts` | 21 | `buildDigestsFor` | `hasDigestBeenSent(id)` inside `const sent = ...` guarding `if (!sent)` (line 22) |
+
+### Why each guard silently breaks (consequence)
+1. **fulfillmentService.ts:26** — `hasStock` is `async` (`fulfillmentService.ts:14`). `ok` is always a truthy Promise → `!ok` is always `false` → `OutOfStockError` never thrown → **out-of-stock orders get shipped** (phantom shipments, WMS-77).
+2. **returnsService.ts:51** — `autoApprovalBlocked` is `async` (`returnsService.ts:36`). `blocked` is always truthy → `!blocked` never true → the refund-auto-approval branch is **unreachable** (FIN-31 gate broken).
+3. **authService.ts:36** — `hasPermission` is `async` (`authService.ts:26`). `allowed` is always truthy → `ForbiddenError` never thrown → **every caller is treated as authorized for every action** (SEC-12).
+4. **promoCodes.ts:16** — `promoIsStale` is `async` (`promoCodes.ts:4`). `stale` always truthy → `!stale` always false → the discount branch is unreachable → **expired promo codes still apply** wait — actually `stale` truthy means discount never applies, so **no promo ever discounts** (all codes silently fall through to the full total).
+5. **reservationService.ts:15** — `hasActiveReservation` is `async` (`reservationService.ts:4`). `already` always truthy → `!already` always false → the reservation-insert branch is unreachable → **no reservation row is ever created** on first call (idempotency contract INV-118 broken).
+6. **digestBuilder.ts:21** — `hasDigestBeenSent` is `async` (`digestBuilder.ts:7`). `sent` always truthy → `!sent` always false → `composeDigest`/`stageEmail` skipped → **no digest is ever built** (CRM-204).
+
+### Clean files (17)
+- `shared/`: `types.ts`, `logger.ts`, `db.ts`
+- `index.ts`
+- `pricing/`: `currencyRates.ts`, `priceCalculator.ts`, `discountEngine.ts`
+- `inventory/`: `stockService.ts`, `supplierSync.ts`
+- `orders/`: `orderService.ts`
+- `users/`: `userService.ts`, `profileService.ts`
+- `notifications/`: `emailService.ts`, `pushService.ts`, `smsService.ts`
+- `reporting/`: `salesReporter.ts`, `auditTrail.ts`, `metricsAggregator.ts`
+
+These either await their async calls correctly, use sync guards, or (in `auditTrail.ts`) use intentional `void ... .catch()` fire-and-forget.
+
+### Consolidated findings
+
+1. `src/orders/fulfillmentService.ts:26` — `fulfillOrder` — `hasStock(item.sku, item.qty)` in `if (!hasStock(...))` guard → stock check never throws.
+2. `src/orders/returnsService.ts:51` — `autoApproveIfEligible` — `autoApprovalBlocked(orderId)` in `if (!...)` guard → auto-approval unreachable.
+3. `src/users/authService.ts:36` — `assertCanManage` — `hasPermission(user, action)` in `if (!...)` guard → authorization always grants.
+4. `src/pricing/promoCodes.ts:16` — `applyPromo` — `promoIsStale(code)` in `if (!...)` guard → discounts never apply.
+5. `src/inventory/reservationService.ts:15` — `reserveForOrder` — `hasActiveReservation(orderId)` in `if (!...)` guard → reservation never created.
+6. `src/notifications/digestBuilder.ts:21` — `buildDigestsFor` — `hasDigestBeenSent(id)` in `if (!...)` guard → no digest ever sent.
+
+**Total: 6 findings across 24 files.** No files were modified (read-only audit as requested).
+
+One thing worth flagging: the failing guards aren't just dead code — they fail **open** in two security/finance-relevant spots (auth `assertCanManage` grants everything; `fulfillmentService` ships out-of-stock). The others fail **closed** but silently disable real functionality. All six share the same trivial fix (`await` before the call), but I've left the code untouched per your read-only instruction.

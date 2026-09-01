@@ -1,0 +1,23 @@
+{
+  "exp": "exp2",
+  "arm": "nl",
+  "run": 5,
+  "startedAt": "2026-09-01T13:31:43.127Z",
+  "durationMs": 172261,
+  "exit": 0,
+  "sessionId": "2ba00d76-426b-426e-ae85-41a42a01a8dd",
+  "testsGreen": true,
+  "testOutputTail": "\n\u001b[1m\u001b[46m RUN \u001b[49m\u001b[22m \u001b[36mv3.2.7 \u001b[39m\u001b[90mC:/codeagent/dynamic-workflows-lab/fixtures/exp2-fix\u001b[39m\n\n \u001b[32m✓\u001b[39m tests/dates.test.ts \u001b[2m(\u001b[22m\u001b[2m2 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 2\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m tests/money.test.ts \u001b[2m(\u001b[22m\u001b[2m2 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 2\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m tests/retry.test.ts \u001b[2m(\u001b[22m\u001b[2m2 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 3\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m tests/refunds.test.ts \u001b[2m(\u001b[22m\u001b[2m2 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 2\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m tests/sorting.test.ts \u001b[2m(\u001b[22m\u001b[2m2 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 11\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m tests/batching.test.ts \u001b[2m(\u001b[22m\u001b[2m2 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 2\u001b[2mms\u001b[22m\u001b[39m\n\n\u001b[2m Test Files \u001b[22m \u001b[1m\u001b[32m6 passed\u001b[39m\u001b[22m\u001b[90m (6)\u001b[39m\n\u001b[2m      Tests \u001b[22m \u001b[1m\u001b[32m12 passed\u001b[39m\u001b[22m\u001b[90m (12)\u001b[39m\n\u001b[2m   Start at \u001b[22m 21:34:39\n\u001b[2m   Duration \u001b[22m 410ms\u001b[2m (transform 252ms, setup 0ms, collect 430ms, tests 22ms, environment 1ms, prepare 683ms)\u001b[22m\n\n",
+  "tscClean": true,
+  "changedFiles": [
+    "src/config.ts",
+    "src/dates.ts",
+    "src/money.ts",
+    "src/refunds.ts",
+    "src/retry.ts",
+    "src/sorting.ts"
+  ],
+  "result": "Sorting fix verified (src/sorting.ts comparator now keys on `createdAt` descending). Four agents still running: batching/config, dates, money, refunds.",
+  "costUsd": 1.100451,
+  "stderr": ""
+}

@@ -1,0 +1,182 @@
+The failure is confirmed. With `BATCH_SIZE = 99`, 250 ids produce batches of `[99, 99, 52]` with overflow `250 % 99 = 52`, while the spec (ORD-88) demands `[100, 100, 50]` with overflow `50`. The batching logic in `src/batching.ts` is correct — the defect is the config constant
+
+=====
+
+Verified — on baseline the exact test at `tests/money.test.ts:6` fails (unrounded 1699.15 vs expected 1699); with the fix all 12 tests pass and `tsc --noEmit` is clean.
+
+
+
+=====
+
+Both checks pass: the refunds test suite is green (2 passed) and `npx tsc --noEmit` produced no errors.
+
+
+
+=====
+
+All verification complete. Let me summarize my adversarial findings.
+
+**Diff verified** (`git diff -- src/retry.ts`): exactly one line changed — `return undefined as T` → `throw lastError` at src/retry.ts:14. No other changes in retry.ts. The success path `return await fn()` at line 9 is untouched.
+
+**No test changes**: `git status --porcelain -- tests/` is empty; full porcelain shows only 6 modified `src/*.ts` files (the other 5 are the sibling planted-bug fixes — config/dates/money/refunds/sorting — pre-existing from the fixture's other bugs, not part of this agent's retry change).
+
+**Behavior**: `npx vitest run tests/retry.test.ts` → 2/2 pass (both the RET-7 rejection test asserting `rejects.toThrow('boom 3')` with exactly 3 calls, and the eventual-success path). Full suite 12/12 pass across 6 files. `npx tsc --noEmit` exits 0 (no type errors — the old `as T` cast is gone, which was the type-unsafe hack).
+
+**Root-cause analysis**: The module comment (RET-7, src/retry.ts:1-3) documents exactly the contract: surface the last error after exhausting attempts, because "silent failure... caused the 2026-06-19 incident where payments vanished without a trace." The old `return undefined as T` was that silent failure — it resolved `undefined` while discarding `lastError` captured in the catch block. `throw lastError` makes the function reject with the final error, matching the contract exactly. Every loop iteration that fails updates `lastError`; the throw only executes after all attempts are exhausted (loop falls through). Edge cases: the success-short-circuit path returns via line 9; attempt counting (`calls` === 3) unaffected. Only theoretical gap is `attempts=0` where `lastError` would be `undefined` and it would `throw undefined` — but that pathological input is undocumented and un-defaulted (default is 3); throwing is strictly more truthful than the old resolve-undefined behavior there too.
+
+**Minimality & intent**: One-line change, no dead code, no hardcoded output, no test edits, no assertion weakening. testIntentPreserved = true.
+
+
+
+=====
+
+Confirmed. `src/retry.ts` imports nothing from config — the defect is entirely within the module itself. The bug is on line 14.
+
+**Root cause:** `withRetry` catches every error, records `lastError`, and after the loop ends it does `return undefined as T` (line 14) instead of throwing `lastError`. So when all attempts fail, the function resolves with `undefined` rather than rejecting with the last error — even though the module's own RET-7 comment states the contract: "transient calls must surface the last error after exhausting attempts... Silent failure here caused the 2026-06-19 incident."
+
+**Evidence:** The test at `tests/retry.test.ts:11` — `await expect(withRetry(alwaysFails, 3)).rejects.toThrow('boom 3')` — fails with `AssertionError: promise resolved "undefined" instead of rejecting`. The retry loop runs 3 times correctly (calls = 3), but the error is swallowed by the `return undefined as T` at `src/retry.ts:14`.
+
+- **failingTestFile:** tests/retry.test.ts
+- **failingTestNames:** ["withRetry > rejects with the last error after exhausting attempts (RET-7)"]
+- **affectedFile:** src/retry.ts
+- **rootCause:** After exhausting attempts, `withRetry` returns `undefined as T` (src/retry.ts:14) instead of throwing `lastError`, so a permanently-failing call resolves instead of rejecting — violating the RET-7 spec documented in the module's header comment.
+- **evidence:** src/retry.ts:14 `return undefined as T`; the test does `await expect(withRetry(alwaysFails, 3)).rejects.toThrow('boom 3')` and vitest reports "promise resolved 'undefined' instead of rejecting" (calls correctly reach 3).
+- **fixApproach:** Change `return undefined as T` to `throw lastError`. This surfaces the final error after all attempts are exhausted, satisfying the assertion. No config constant is involved — retry.ts imports nothing.
+
+
+
+=====
+
+Both verifications passed: vitest reports 2/2 tests green, and `tsc --noEmit` produced no errors.
+
+
+
+=====
+
+Both verifications pass. The previously failing test `withRetry > rejects with the last error after exhausting attempts (RET-7)` now passes (all 2 tests in the file pass, 0 failures), and `npx tsc --noEmit` exits 0 with no errors
+
+=====
+
+The defect is fully confirmed and independent of any config constant (money.ts does not import config.ts). The fix is self-contained in `src/money.ts`.
+
+
+
+=====
+
+Root cause confirmed. `src/dates.ts` uses `d.getUTCMonth()`, which returns a 0-based month (0-11), but the spec (OPS-31) and test expect 1-based months (1-12). For `'2026-03-08T12:00:00Z'`, `getUTCMonth()` returns `2`, producing `'2026-02-08'` instead of `'2026-03-08'`.
+
+Note the second test ("pads single digit days") passes only because `getUTCMonth()` of April (month index 3) happens to already produce a zero-padded `-04`, so the off-by-one isn't caught there — confirming the month logic is the defect, not days.
+
+The fix belongs in `src/dates.ts` (no config constant is involved; `config.ts` has no date values
+
+=====
+
+All verification complete. Let me note the key evidence:
+
+**Diff inspection (src/refunds.ts):** baseline at `HEAD` had `userId: order.customerId`; now `customerId: order.customerId` (line 7). No other changes in the file. `git status --porcelain -- tests/` empty — tests untouched. Six src/ files changed total (config, dates, money, refunds, retry, sorting), all in src/, consistent with the fixture's 6 planted bugs; the refunds change is unrelated to and disjoint from the other five, which are each a one-line root-cause fix for a different planted bug.
+
+**Contract check:** `RefundRequest` in `src/types.ts` (line 10) declares `customerId: string` — there is no `userId` member. `refundSummary()` in `src/refunds.ts` (line 15) reads `refund.customerId`. `Order.customerId` is the source field. So the baseline produced TS2353 (excess property) and, at runtime under esbuild, `refund.customerId === undefined`, failing both assertions in `tests/refunds.test.ts` ("carries the customer id", which asserts `refund.customerId` and summary containing `c-42`, and "summarizes a refund for the ops log"). Grep confirms no other code references `userId`, so the rename has no collateral. `refundSummary` renders `for customer ${refund.customerId}` — a `userId`-keyed object would read `undefined` in every path, not just one assertion.
+
+**Behavior:** `npx tsc --noEmit` exits 0; `npx vitest run` passes 12/12 including both refunds tests. The fix is a direct mapping of a required typed field — no hardcoding, no dead code, no assertion weakening, and it honors the full contract (any `order.customerId` value flows through; no edge-case gating).
+
+
+
+=====
+
+All verification is complete. Let me summarize the findings.
+
+**Diff verification** (dates.ts, exactly as reported):
+- `const m = d.getUTCMonth()` → `const m = d.getUTCMonth() + 1` — single-line, minimal change
+- `git status --porcelain` shows 6 modified files, all under `src/` (config, dates, money, refunds, retry, sorting — the fixture's 6 planted bugs, each with its own test); **zero changes under `tests/`**. `git diff --stat` confirms dates.ts is 1 insertion / 1 deletion.
+
+**Behavioral checks:**
+- `npx vitest run tests/dates.test.ts` → 2 passed (OPS-31 month rendering + single-digit day padding)
+- Full suite → 12/12 passed; `npx tsc --noEmit` → exit 0
+- Manual edge probes: `2026-12-31` → `2026-12-31` (0-based index 11 + 1 = 12, no overflow/wrap), `2026-01-01` → `2026-01-01` (index 0 + 1 = 1), `2026-04-05` → `2026-04-05` (day padding intact), plus `1999-11-15`, `2024-12-25`, `2000-01-02` all render correctly.
+
+**Adversarial judgment:**
+- The change fixes the real root cause: `getUTCMonth()` is 0-based (0-11) while the module's own spec comment (src/dates.ts:1-2, OPS-31) requires YYYY-MM-DD with 1-based months. The `+1` offset is the canonical fix and covers the whole contract, not just the single assertion — verified across January, December, multi-digit months, and day-padding cases the test does not directly cover.
+- Minimal: 1 line, no dead code, no hardcoded outputs, no unrelated changes in the file.
+- No assertions weakened, no test edits; tests still assert the genuine intent (lines 5-9, 11-13 of tests/dates.test.ts).
+- `shortDate` has no other callers and its only consumer is this test module, so no downstream assumptions are at risk
+
+=====
+
+Both checks pass: the money test suite passes (2 tests) and `tsc --noEmit` exits 0
+
+=====
+
+The fix is validated. The single-line change in `src/dates.ts` fixed the failing test and `tsc --noEmit` reports no errors.
+
+
+
+=====
+
+All verification is complete. Let me summarize my adversarial assessment:
+
+**Diff verified**: `src/config.ts:6` — `BATCH_SIZE` changed from `99` to `100`, exactly one line. `git status --porcelain` shows zero files changed under `tests/`, and `src/batching.ts` + `src/types.ts` have no diff (the other modified files — dates/money/refunds/retry/sorting — are separate planted-bug fixes for this 6-bug fixture, per the memory note, and don't touch the batching contract).
+
+**Test intent**: `tests/batching.test.ts` asserts 250 ids split into `[100, 100, 50]` with overflow `50`, plus order preservation. The config's own ORD-88 spec comment (config.ts:4-5) mandates "chunks of exactly 100 ids." The old value `99` contradicted the spec that sits directly above it.
+
+**Root cause**: `src/batching.ts:8-11` faithfully slices `i += BATCH_SIZE` and computes `overflow = ids.length % BATCH_SIZE` using the config constant — with `99`, 250 ids produced `[99, 99, 52]` (lengths) and overflow 52, violating both spec and test. The wrong constant was the bug; the slicing logic is correct.
+
+**Real behavior verified**: All 12 tests pass (including both batching tests), `tsc --noEmit` exits 0, and `BATCH_SIZE` has exactly one consumer (`src/batching.ts`) per grep — no ripple effects.
+
+**Edge cases honored**: With the constant now 100, the module is correct for any N: N≤100 → single batch with overflow N; N=100 → one batch, overflow 0; N=250 → `[100,100,50]`, overflow 50; N=0 → `[]`, overflow 0. Order preservation is inherent to `slice`. `overflow = length % BATCH_SIZE` is now correct for all inputs.
+
+**No hacks**: The fix does not hardcode outputs, add dead code, weaken assertions, or touch tests. It restores the single-source-of-truth constant to the value its own spec comment requires.
+
+
+
+=====
+
+The root cause is clear. The `RefundRequest` interface (src/types.ts) defines `customerId`, and the test asserts `refund.customerId`, but `createRefund` in src/refunds.ts sets `userId` instead. The tsc error TS2353 at src/refunds.ts (7,5) confirms it, and the runtime failure (`expected undefined to be 'c-42'`) is the direct consequence. `refundSummary` also reads `refund.customerId`, so fixing the property name in `createRefund` repairs both the failing test and the summary.
+
+The defect is entirely within `src/refunds.ts`; no config constant is involved
+
+=====
+
+I have everything I need. Let me analyze the findings.
+
+The failing test `tests/sorting.test.ts` expects `newestFirst` to return orders sorted by `createdAt` descending:
+- o-1: `2026-08-01T10:00:00Z`
+- o-2: `2026-08-03T09:00:00Z` (newest)
+- o-3: `2026-08-02T12:00:00Z`
+- Expected: `['o-2', 'o-3', 'o-1']`
+
+The module comment in `src/sorting.ts` confirms OPS-12 intent: "the ops dashboard renders orders newest first."
+
+The defect is in `src/sorting.ts` line 8:
+```ts
+return [...orders].sort((a, b) => a.id.localeCompare(b.id))
+```
+It sorts by `id` (lexicographic ascending), producing `['o-1','o-2','o-3']` — which is oldest-first-adjacent coincidence (id order is reverse of date order). It never looks at `createdAt` at all. No config constant is involved in this path (sorting.ts only imports `types`).
+
+The second test ("does not mutate") already passes because of the `[...orders]` spread, so the fix only touches the comparator.
+
+
+
+=====
+
+Fix applied and verified. The diagnosis was correct: `newestFirst` was sorting by `a.id.localeCompare(b.id)` instead of by `createdAt` descending. Both tests now pass and `tsc --noEmit` is clean
+
+=====
+
+I have all the evidence I need. Let me summarize my adversarial verification:
+
+**Git state:** Working tree shows 6 modified files, all under `src/` (sorting, config, dates, money, refunds, retry). `git diff --name-only -- tests/` returns 0 — tests are untouched. The other 5 modified src files are separate fixes from the fixture's other planted bugs (ORD-88, RET-7 referenced bugs), consistent with the fixture contract "Fix src/, never touch tests."
+
+**Diff in `src/sorting.ts`:** Exactly the reported one-line change at line 8 — comparator switched from `a.id.localeCompare(b.id)` to `b.createdAt.localeCompare(a.createdAt)`. The `[...orders]` spread is preserved.
+
+**Test intent from `tests/sorting.test.ts`:**
+- Module spec comment at `src/sorting.ts:3-4` (unchanged by the fix): "OPS-12: the ops dashboard renders orders newest first."
+- Test 1 (line 12-15) expects `['o-2', 'o-3', 'o-1']` for orders with createdAt `2026-08-03`, `2026-08-02`, `2026-08-01` — unambiguously newest-first by timestamp, not by id (id-sort yields `['o-1','o-2','o-3']`).
+- Test 2 (line 17-21) guards non-mutation.
+
+**Empirical behavior:**
+- Pre-fix baseline: the OPS-12 test fails (actual `['o-1','o-2','o-3']` vs expected `['o-2','o-3','o-1']`), demonstrating the old code genuinely violated the contract.
+- Post-fix: `npx vitest run tests/sorting.test.ts` → 2/2 pass; full suite → 12/12 pass; `npx tsc --noEmit` → exit 0.
+- Manual trace of the comparator confirms correct ordering: `'2026-08-03...'.localeCompare('2026-08-02...')` > 0 puts o-2 first, etc.
+
+**Adversarial checks:** Real root cause (code ignored createdAt entirely and sorted by id — fixing the comparator addresses the whole OPS-12 contract, not just the one assertion). Minimal (one-line, no dead code or hardcoded outputs). No assertions weakened or tests edited. Edge cases honored: the spec comment itself says "Ties are fine — createdAt has millisecond precision," and `localeCompare` is lexicographically correct on ISO-8601 UTC strings, ties return 0 and Array.sort is stable, preserving input order.
+
