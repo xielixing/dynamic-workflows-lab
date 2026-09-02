@@ -53,3 +53,19 @@ node tools/grade-exp1.mjs          # coverage / recall / precision / Jaccard
 n=5 per arm, single machine, synthetic fixtures, one model behind a proxy.
 This is engineering-grade evidence for a blog post, not a paper. Negative and
 inconclusive results are reported as-is.
+
+## MEASUREMENT CAVEAT (discovered 2026-09-02, interactive verification)
+
+Claude Code transcripts **under-record subagent token usage** for BOTH arms:
+- Workflow subagents: usage recorded for only 2–5 of 24 agents per run
+  (all-or-nothing per agent). Agents that DO record average ~19.0k tokens
+  (input ≈1.5k + cache_read ≈17.4k), matching the `/workflows` panel
+  (~19.4k–22.7k per agent).
+- Task subagents (NL arm): usage almost always 0.
+
+Therefore the `meanGrandTokens` / `meanSubTokens` aggregates in
+`results/*/summary.md` are **underestimates** and the unattended token
+conclusions are **retracted** until re-measured. The `/workflows` panel is the
+authoritative per-agent source. Determinism / success / cheat metrics are
+content-based and unaffected. Interactive re-verification in progress:
+see `results/interactive/run-log.md`.
