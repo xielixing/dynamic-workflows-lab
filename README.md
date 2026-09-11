@@ -1,5 +1,7 @@
 # dynamic-workflows-lab
 
+你好！
+
 Empirical companion to the blog post [Dynamic Workflows](https://xielixing.github.io/) —
 two controlled experiments comparing **script orchestration** (Claude Code dynamic
 workflows) against **natural-language orchestration** (Claude spawning subagents
